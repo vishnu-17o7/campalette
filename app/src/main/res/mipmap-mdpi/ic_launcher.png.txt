@@ -1,0 +1,1 @@
+This is a placeholder. In a real build, proper PNG icons would be generated.
