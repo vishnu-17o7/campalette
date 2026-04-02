@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Campalette</string>
-    <string name="take_photo">Take Photo</string>
+    <string name="take_photo">Capture</string>
     <string name="camera_permission_required">Camera permission is required to take photos</string>
     <string name="grant_permission">Grant Permission</string>
     <string name="color_palette">Color Palette</string>
@@ -14,4 +14,29 @@
     <string name="dark_muted">Dark Muted</string>
     <string name="hex_color">HEX: %s</string>
     <string name="rgb_color">RGB: %d, %d, %d</string>
+    <string name="capture_subtitle">Snap a scene to extract its palette</string>
+    <string name="live_view">Live view</string>
+    <string name="capture_hint">Tap capture to build your palette</string>
+    <string name="palette_ready">Auto-updates</string>
+    <string name="palette_empty_title">Your palette will appear here</string>
+    <string name="palette_empty_subtitle">Capture a moment to see dominant and accent hues.</string>
+    <string name="camera_bind_error">Could not start the camera preview.</string>
+    <string name="capture_unavailable">Camera is not ready yet.</string>
+    <string name="capture_failed">Capture failed. Please try again.</string>
+    <string name="palette_seed">Sampled</string>
+    <string name="palette_complement">Complement</string>
+    <string name="palette_analog_a">Analogous A</string>
+    <string name="palette_analog_b">Analogous B</string>
+    <string name="palette_tint">Tint</string>
+    <string name="palette_shade">Shade</string>
+    <string name="color_details">Color details</string>
+    <string name="close">Close</string>
+    <string name="copy">Copy</string>
+    <string name="copied">Copied</string>
+    <string name="tap_to_copy">Tap any row to copy</string>
+    <string name="rgb_label">RGB</string>
+    <string name="hsl_label">HSL</string>
+    <string name="hsv_label">HSV</string>
+    <string name="cmyk_label">CMYK</string>
+    <string name="luminance_label">Luminance</string>
 </resources>
