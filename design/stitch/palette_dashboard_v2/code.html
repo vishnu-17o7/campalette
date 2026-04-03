@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CAMPALETTE | Dynamic Palette Dashboard</title>
+<!-- Fonts: Newsreader & Manrope -->
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "inverse-primary": "#95d2cc",
+              "primary-container": "#1f5f5b",
+              "on-primary-fixed": "#00201e",
+              "surface-container-highest": "#e6e2dd",
+              "error-container": "#ffdad6",
+              "secondary": "#81542e",
+              "inverse-on-surface": "#f4f0eb",
+              "on-tertiary": "#ffffff",
+              "surface-container": "#f1ede8",
+              "surface-bright": "#fdf9f4",
+              "error": "#ba1a1a",
+              "on-tertiary-container": "#a3d99b",
+              "on-secondary-fixed": "#2f1500",
+              "on-secondary": "#ffffff",
+              "surface-container-high": "#ebe8e3",
+              "surface-tint": "#2a6864",
+              "primary-fixed": "#b0eee8",
+              "on-error": "#ffffff",
+              "primary-fixed-dim": "#95d2cc",
+              "primary": "#004743",
+              "on-primary": "#ffffff",
+              "tertiary-fixed-dim": "#9fd497",
+              "on-error-container": "#93000a",
+              "inverse-surface": "#31302d",
+              "surface-container-low": "#f7f3ee",
+              "tertiary": "#18481a",
+              "surface-dim": "#ddd9d5",
+              "surface": "#fdf9f4",
+              "outline": "#6f7978",
+              "background": "#fdf9f4",
+              "on-surface": "#1c1c19",
+              "on-primary-fixed-variant": "#06504c",
+              "surface-variant": "#e6e2dd",
+              "on-tertiary-fixed-variant": "#215021",
+              "on-tertiary-fixed": "#002203",
+              "surface-container-lowest": "#ffffff",
+              "secondary-fixed": "#ffdcc3",
+              "tertiary-fixed": "#baf1b1",
+              "tertiary-container": "#31602f",
+              "secondary-fixed-dim": "#f5bb8c",
+              "on-surface-variant": "#3f4947",
+              "secondary-container": "#fec394",
+              "outline-variant": "#bfc8c7",
+              "on-primary-container": "#99d7d1",
+              "on-background": "#1c1c19",
+              "on-secondary-container": "#794e29",
+              "on-secondary-fixed-variant": "#653d19"
+            },
+            fontFamily: {
+              "headline": ["Newsreader", "serif"],
+              "body": ["Manrope", "sans-serif"],
+              "label": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .grain-overlay {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+        }
+        .tonal-shift-surface-container-low {
+            background-color: rgba(247, 243, 238, 0.85);
+        }
+        .scale-105-squishy-interaction:active {
+            transform: scale(1.05);
+        }
+        .scale-95-on-press:active {
+            transform: scale(0.95);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+<div class="grain-overlay fixed inset-0 z-[100]"></div>
+<!-- TopAppBar Shell -->
+<nav class="fixed top-0 w-full z-50 bg-[#fdf9f4]/85 dark:bg-[#1c1c19]/85 backdrop-blur-xl flex justify-between items-center px-6 py-4 w-full">
+<div class="flex items-center gap-4">
+<button class="text-[#004743] dark:text-[#52b2ab] hover:opacity-80 transition-opacity duration-300 scale-95-on-press">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+</div>
+<h1 class="font-serif italic text-2xl tracking-tighter text-[#004743] dark:text-[#52b2ab]">CAMPALETTE</h1>
+<div class="flex items-center gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden">
+<img alt="User profile avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-92rutKAKbE-NbkPfLdk3u-sGy1Cr_Pilb5We3zPtyJfWie1mPS_E-kzk766RHBoS-KNKyTb_syxqmFt44NS8e5kIAAAwsPzp9FyF73rCJlwBADIKk7pWo3YxapW67Jj0noObcfc4F76GVe8PXm9x3-yHBAc-LdNfSXbvNEqzV_tczCldaMgDzkgioMhAZI01on_rVWDOQc_mZCZhDR8xmd7Icj-hgEgkym9ft9l4WPgQCM35lvYj1shYuFtJTUDkuX_AEJhrTX4"/>
+</div>
+</div>
+</nav>
+<main class="min-h-screen pb-32">
+<!-- Hero: Blurred Captured Image & Color Picker -->
+<section class="relative h-[486px] w-full overflow-hidden">
+<img class="absolute inset-0 w-full h-full object-cover blur-2xl scale-110" data-alt="misty morning forest landscape with soft greens, muted browns, and hazy light filtered through pine trees" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVJHD21pQB0_5rXVnpEkvu-ZI_CNE0pTRkcSqtVJKdUhka78c4kIBJvRpsm2jimG6xLr_PYZNpZwPeQ2tE668XLLaUaNop_nfyAI94tZ1vFyMpjvpjxDE_3906hwd4sSjAAUAmo0WiY5EjSN6ZD3PvOJSZTKIhEjefUBdoGr72CPWkyZq0skK75xvNUNkMcQlgnw0IuZDA3JsvzVu3NU3Kw5Xeh9MKpASG54s3E-44_OvL8p8fIO_ntpiUSf4sjutocOcTCEwldyU"/>
+<!-- Radial Color Picker Overlay -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="relative w-72 h-72 md:w-96 md:h-96">
+<!-- Glassmorphic Ring -->
+<div class="absolute inset-0 rounded-full border-[32px] border-white/20 backdrop-blur-md"></div>
+<!-- Color Nodes on the Ring -->
+<div class="absolute inset-0 flex items-center justify-center">
+<!-- Harmony Nodes (Simulated Ring Selection) -->
+<div class="absolute -top-4 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full border-4 border-white shadow-xl bg-[#004743] transition-transform hover:scale-110 cursor-pointer"></div>
+<div class="absolute top-1/4 right-0 w-10 h-10 rounded-full border-4 border-white shadow-lg bg-[#2a6864] transition-transform hover:scale-110 cursor-pointer"></div>
+<div class="absolute bottom-1/4 right-0 w-10 h-10 rounded-full border-4 border-white shadow-lg bg-[#81542e] transition-transform hover:scale-110 cursor-pointer"></div>
+<div class="absolute bottom-1/4 left-0 w-10 h-10 rounded-full border-4 border-white shadow-lg bg-[#31602f] transition-transform hover:scale-110 cursor-pointer"></div>
+<div class="absolute top-1/4 left-0 w-10 h-10 rounded-full border-4 border-white shadow-lg bg-[#fec394] transition-transform hover:scale-110 cursor-pointer"></div>
+</div>
+<!-- Center Picker Visual -->
+<div class="absolute inset-0 m-auto w-32 h-32 rounded-full bg-white/10 backdrop-blur-3xl flex flex-col items-center justify-center border border-white/30 shadow-2xl">
+<span class="material-symbols-outlined text-white text-3xl mb-1" data-icon="colorize">colorize</span>
+<span class="font-label text-[10px] tracking-widest text-white uppercase font-bold">Active</span>
+</div>
+</div>
+</div>
+<!-- Contextual Header Overlay -->
+<div class="absolute bottom-8 left-8 right-8 flex justify-between items-end">
+<div>
+<p class="font-label tracking-widest uppercase text-[10px] text-white/80 mb-1">Recent Capture</p>
+<h2 class="font-headline italic text-4xl text-white">Morning Mist</h2>
+</div>
+<div class="flex gap-3">
+<button class="bg-white/20 backdrop-blur-md text-white p-3 rounded-full hover:bg-white/30 transition-all scale-95-on-press">
+<span class="material-symbols-outlined" data-icon="share">share</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Palette Details Canvas -->
+<section class="px-6 -mt-12 relative z-10">
+<div class="bg-surface-container-low rounded-t-xl p-8 shadow-2xl">
+<!-- Action Row -->
+<div class="flex justify-between items-center mb-12">
+<div class="flex items-center gap-6">
+<div class="flex flex-col">
+<span class="font-label tracking-widest uppercase text-[10px] text-outline">Created</span>
+<span class="font-headline text-lg">Oct 24, 2023</span>
+</div>
+<div class="h-8 w-px bg-outline-variant/30"></div>
+<div class="flex flex-col">
+<span class="font-label tracking-widest uppercase text-[10px] text-outline">Source</span>
+<span class="font-headline text-lg">Nature Lab</span>
+</div>
+</div>
+<div class="flex gap-4">
+<button class="rounded-full bg-surface-container-lowest text-primary px-8 py-3 font-label font-bold text-[12px] tracking-widest uppercase border border-outline-variant/20 hover:bg-white transition-all scale-105-squishy-interaction">Export</button>
+<button class="rounded-full bg-primary text-on-primary px-10 py-3 font-label font-bold text-[12px] tracking-widest uppercase shadow-lg shadow-primary/20 hover:opacity-90 transition-all scale-105-squishy-interaction">Save</button>
+</div>
+</div>
+<!-- Bento-ish Grid of Swatches -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Color Card 1 -->
+<div class="bg-surface-container-lowest p-8 rounded-lg group hover:shadow-xl transition-shadow duration-500">
+<div class="w-full aspect-[4/3] rounded-lg bg-[#004743] shadow-inner mb-8 transition-transform group-hover:scale-[1.02]"></div>
+<div class="space-y-4">
+<h3 class="font-headline italic text-3xl">Deep Forest</h3>
+<div class="flex justify-between items-baseline pt-4 border-t border-surface-container-high">
+<span class="font-label text-[11px] uppercase tracking-tighter text-outline">HEX</span>
+<span class="font-headline text-xl text-on-surface">#004743</span>
+</div>
+<div class="flex justify-between items-baseline">
+<span class="font-label text-[11px] uppercase tracking-tighter text-outline">RGB</span>
+<span class="font-headline text-xl text-on-surface">0, 71, 67</span>
+</div>
+</div>
+</div>
+<!-- Color Card 2 -->
+<div class="bg-surface-container-lowest p-8 rounded-lg group hover:shadow-xl transition-shadow duration-500">
+<div class="w-full aspect-[4/3] rounded-lg bg-[#2a6864] shadow-inner mb-8 transition-transform group-hover:scale-[1.02]"></div>
+<div class="space-y-4">
+<h3 class="font-headline italic text-3xl">Glass Lake</h3>
+<div class="flex justify-between items-baseline pt-4 border-t border-surface-container-high">
+<span class="font-label text-[11px] uppercase tracking-tighter text-outline">HEX</span>
+<span class="font-headline text-xl text-on-surface">#2A6864</span>
+</div>
+<div class="flex justify-between items-baseline">
+<span class="font-label text-[11px] uppercase tracking-tighter text-outline">RGB</span>
+<span class="font-headline text-xl text-on-surface">42, 104, 100</span>
+</div>
+</div>
+</div>
+<!-- Color Card 3 -->
+<div class="bg-surface-container-lowest p-8 rounded-lg group hover:shadow-xl transition-shadow duration-500">
+<div class="w-full aspect-[4/3] rounded-lg bg-[#81542e] shadow-inner mb-8 transition-transform group-hover:scale-[1.02]"></div>
+<div class="space-y-4">
+<h3 class="font-headline italic text-3xl">Wet Earth</h3>
+<div class="flex justify-between items-baseline pt-4 border-t border-surface-container-high">
+<span class="font-label text-[11px] uppercase tracking-tighter text-outline">HEX</span>
+<span class="font-headline text-xl text-on-surface">#81542E</span>
+</div>
+<div class="flex justify-between items-baseline">
+<span class="font-label text-[11px] uppercase tracking-tighter text-outline">RGB</span>
+<span class="font-headline text-xl text-on-surface">129, 84, 46</span>
+</div>
+</div>
+</div>
+<!-- Color Card 4 -->
+<div class="bg-surface-container-lowest p-8 rounded-lg group hover:shadow-xl transition-shadow duration-500">
+<div class="w-full aspect-[4/3] rounded-lg bg-[#31602f] shadow-inner mb-8 transition-transform group-hover:scale-[1.02]"></div>
+<div class="space-y-4">
+<h3 class="font-headline italic text-3xl">Wild Moss</h3>
+<div class="flex justify-between items-baseline pt-4 border-t border-surface-container-high">
+<span class="font-label text-[11px] uppercase tracking-tighter text-outline">HEX</span>
+<span class="font-headline text-xl text-on-surface">#31602F</span>
+</div>
+<div class="flex justify-between items-baseline">
+<span class="font-label text-[11px] uppercase tracking-tighter text-outline">RGB</span>
+<span class="font-headline text-xl text-on-surface">49, 96, 47</span>
+</div>
+</div>
+</div>
+<!-- Color Card 5 -->
+<div class="bg-surface-container-lowest p-8 rounded-lg group hover:shadow-xl transition-shadow duration-500 md:col-span-2 lg:col-span-1">
+<div class="w-full aspect-[4/3] rounded-lg bg-[#fec394] shadow-inner mb-8 transition-transform group-hover:scale-[1.02]"></div>
+<div class="space-y-4">
+<h3 class="font-headline italic text-3xl">Morning Sun</h3>
+<div class="flex justify-between items-baseline pt-4 border-t border-surface-container-high">
+<span class="font-label text-[11px] uppercase tracking-tighter text-outline">HEX</span>
+<span class="font-headline text-xl text-on-surface">#FEC394</span>
+</div>
+<div class="flex justify-between items-baseline">
+<span class="font-label text-[11px] uppercase tracking-tighter text-outline">RGB</span>
+<span class="font-headline text-xl text-on-surface">254, 195, 148</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar Shell -->
+<footer class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center pb-8 pt-2 bg-[#f7f3ee]/90 dark:bg-[#2a2a26]/90 backdrop-blur-2xl">
+<!-- Palette (Active) -->
+<button class="bg-[#004743] text-white rounded-full p-4 scale-110 -translate-y-2 shadow-lg transition-all">
+<span class="material-symbols-outlined" data-icon="palette" style="font-variation-settings: 'FILL' 1;">palette</span>
+</button>
+<!-- Auto Awesome -->
+<button class="text-[#1c1c19]/50 dark:text-[#fdf9f4]/50 p-3 hover:text-[#1f5f5b] transition-all scale-105-squishy-interaction">
+<span class="material-symbols-outlined" data-icon="auto_awesome">auto_awesome</span>
+</button>
+<!-- Photo Camera -->
+<button class="text-[#1c1c19]/50 dark:text-[#fdf9f4]/50 p-3 hover:text-[#1f5f5b] transition-all scale-105-squishy-interaction">
+<span class="material-symbols-outlined" data-icon="photo_camera">photo_camera</span>
+</button>
+<!-- History -->
+<button class="text-[#1c1c19]/50 dark:text-[#fdf9f4]/50 p-3 hover:text-[#1f5f5b] transition-all scale-105-squishy-interaction">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+</button>
+<!-- Settings -->
+<button class="text-[#1c1c19]/50 dark:text-[#fdf9f4]/50 p-3 hover:text-[#1f5f5b] transition-all scale-105-squishy-interaction">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</footer>
+<!-- FAB (Suppressed based on context: Details Page) -->
+</body></html>

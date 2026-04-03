@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Deep Teal - Detailed Color View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;0,700;1,400;1,600&amp;family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "secondary-fixed": "#ffdcc3",
+              "tertiary": "#18481a",
+              "surface-variant": "#e6e2dd",
+              "inverse-on-surface": "#f4f0eb",
+              "surface-tint": "#2a6864",
+              "on-secondary-fixed-variant": "#653d19",
+              "on-secondary": "#ffffff",
+              "primary": "#004743",
+              "surface-container-low": "#f7f3ee",
+              "error": "#ba1a1a",
+              "primary-fixed": "#b0eee8",
+              "on-error-container": "#93000a",
+              "tertiary-container": "#31602f",
+              "secondary-fixed-dim": "#f5bb8c",
+              "secondary-container": "#fec394",
+              "on-secondary-container": "#794e29",
+              "on-background": "#1c1c19",
+              "on-tertiary-fixed-variant": "#215021",
+              "tertiary-fixed-dim": "#9fd497",
+              "on-primary-fixed": "#00201e",
+              "surface": "#fdf9f4",
+              "secondary": "#81542e",
+              "tertiary-fixed": "#baf1b1",
+              "surface-container-high": "#ebe8e3",
+              "surface-container-highest": "#e6e2dd",
+              "inverse-surface": "#31302d",
+              "outline-variant": "#bfc8c7",
+              "on-surface": "#1c1c19",
+              "on-tertiary-fixed": "#002203",
+              "on-primary-container": "#99d7d1",
+              "on-error": "#ffffff",
+              "primary-container": "#1f5f5b",
+              "on-primary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "on-secondary-fixed": "#2f1500",
+              "on-primary-fixed-variant": "#06504c",
+              "primary-fixed-dim": "#95d2cc",
+              "outline": "#6f7978",
+              "surface-bright": "#fdf9f4",
+              "surface-dim": "#ddd9d5",
+              "on-surface-variant": "#3f4947",
+              "inverse-primary": "#95d2cc",
+              "error-container": "#ffdad6",
+              "background": "#fdf9f4",
+              "surface-container": "#f1ede8",
+              "on-tertiary": "#ffffff",
+              "on-tertiary-container": "#a3d99b"
+            },
+            fontFamily: {
+              "headline": ["Newsreader", "serif"],
+              "body": ["Manrope", "sans-serif"],
+              "label": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      body {
+        background-color: #fdf9f4;
+        color: #1c1c19;
+        font-family: 'Manrope', sans-serif;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background selection:bg-primary-fixed selection:text-on-primary-fixed">
+<header class="flex justify-between items-center px-6 h-16 w-full fixed top-0 z-50 bg-transparent">
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface/80 backdrop-blur-md text-primary hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="font-serif italic text-xl text-white drop-shadow-sm">The Digital Atelier</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface/80 backdrop-blur-md text-primary hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">favorite</span>
+</button>
+</header>
+<main class="relative min-h-screen pb-32">
+<section class="h-[397px] w-full bg-primary-container relative overflow-hidden">
+<div class="absolute inset-0 bg-gradient-to-br from-primary to-primary-container opacity-90"></div>
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="w-64 h-64 rounded-full bg-white/5 blur-3xl"></div>
+</div>
+<div class="absolute bottom-8 left-8">
+<span class="font-label text-[10px] uppercase tracking-[0.2em] text-on-primary-container/70 mb-2 block">Current Selection</span>
+<h1 class="font-headline italic text-6xl md:text-8xl text-white">Deep Teal</h1>
+</div>
+</section>
+<section class="bg-surface -mt-12 relative z-10 rounded-t-xl px-6 pt-12 pb-8 shadow-[0_-12px_64px_rgba(28,28,25,0.08)]">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 max-w-7xl mx-auto">
+<div class="lg:col-span-4 space-y-10">
+<div>
+<h2 class="font-headline italic text-3xl mb-8 border-b border-surface-container-high pb-4">Color DNA</h2>
+<div class="grid grid-cols-1 gap-4">
+<div class="group flex items-center justify-between p-4 rounded-xl bg-surface-container-lowest hover:bg-surface-container-low transition-colors duration-300">
+<div class="space-y-1">
+<span class="font-label text-[10px] uppercase tracking-widest text-outline">Hex Code</span>
+<p class="font-headline text-2xl text-primary">#1F5F5B</p>
+</div>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-outline group-hover:text-primary group-hover:bg-primary-fixed transition-all">
+<span class="material-symbols-outlined">content_copy</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="p-4 rounded-xl bg-surface-container-lowest">
+<span class="font-label text-[10px] uppercase tracking-widest text-outline block mb-1">RGB</span>
+<p class="font-body font-semibold text-on-surface">31, 95, 91</p>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-lowest">
+<span class="font-label text-[10px] uppercase tracking-widest text-outline block mb-1">HSL</span>
+<p class="font-body font-semibold text-on-surface">176°, 51%, 25%</p>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-lowest">
+<span class="font-label text-[10px] uppercase tracking-widest text-outline block mb-1">CMYK</span>
+<p class="font-body font-semibold text-on-surface">67, 0, 4, 63</p>
+</div>
+<div class="p-4 rounded-xl bg-surface-container-lowest">
+<span class="font-label text-[10px] uppercase tracking-widest text-outline block mb-1">Luminance</span>
+<p class="font-body font-semibold text-on-surface">9.4%</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="lg:col-span-8">
+<h2 class="font-headline italic text-3xl mb-8 border-b border-surface-container-high pb-4">Harmonic Projections</h2>
+<div class="space-y-8">
+<div class="space-y-3">
+<h3 class="font-label text-[11px] uppercase tracking-[0.15em] text-outline font-bold">Classic Harmonies</h3>
+<div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+<div class="flex-none w-40">
+<div class="h-24 w-full bg-primary-container rounded-xl mb-2 relative overflow-hidden">
+<div class="absolute inset-0" style="box-shadow: inset 0 2px 8px rgba(0,0,0,0.15)"></div>
+</div>
+<span class="font-body text-xs font-bold block">Sampled</span>
+<span class="font-label text-[10px] text-outline">#1F5F5B</span>
+</div>
+<div class="flex-none w-40">
+<div class="h-24 w-full bg-[#5F1F23] rounded-xl mb-2 relative overflow-hidden">
+<div class="absolute inset-0" style="box-shadow: inset 0 2px 8px rgba(0,0,0,0.15)"></div>
+</div>
+<span class="font-body text-xs font-bold block">Complement</span>
+<span class="font-label text-[10px] text-outline">#5F1F23</span>
+</div>
+<div class="flex-none w-40">
+<div class="h-24 w-full bg-[#1F3D5F] rounded-xl mb-2 relative overflow-hidden">
+<div class="absolute inset-0" style="box-shadow: inset 0 2px 8px rgba(0,0,0,0.15)"></div>
+</div>
+<span class="font-body text-xs font-bold block">Analogous</span>
+<span class="font-label text-[10px] text-outline">#1F3D5F</span>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<h3 class="font-label text-[11px] uppercase tracking-[0.15em] text-outline font-bold">Tonal Gradients</h3>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="group cursor-pointer">
+<div class="h-32 w-full bg-[#3d8c87] rounded-xl mb-2 flex items-end p-3 transition-transform hover:scale-[1.02]">
+<span class="text-[10px] font-bold text-white/60">TINT</span>
+</div>
+<span class="font-label text-[10px] text-on-surface block text-center">Lighter</span>
+</div>
+<div class="group cursor-pointer">
+<div class="h-32 w-full bg-[#164441] rounded-xl mb-2 flex items-end p-3 transition-transform hover:scale-[1.02]">
+<span class="text-[10px] font-bold text-white/60">SHADE</span>
+</div>
+<span class="font-label text-[10px] text-on-surface block text-center">Darker</span>
+</div>
+<div class="group cursor-pointer">
+<div class="h-32 w-full bg-[#2a6b67] rounded-xl mb-2 flex items-end p-3 transition-transform hover:scale-[1.02]">
+<span class="text-[10px] font-bold text-white/60">SAT</span>
+</div>
+<span class="font-label text-[10px] text-on-surface block text-center">Vibrant</span>
+</div>
+<div class="group cursor-pointer">
+<div class="h-32 w-full bg-[#2a4543] rounded-xl mb-2 flex items-end p-3 transition-transform hover:scale-[1.02]">
+<span class="text-[10px] font-bold text-white/60">DESAT</span>
+</div>
+<span class="font-label text-[10px] text-on-surface block text-center">Muted</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="max-w-7xl mx-auto px-6 mt-12 mb-24">
+<div class="rounded-xl bg-surface-container-low p-8 relative overflow-hidden">
+<div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div>
+<h4 class="font-headline italic text-2xl mb-2">Artisan's Context</h4>
+<p class="font-body text-on-surface-variant max-w-lg">Deep Teal evokes feelings of scholarly focus and natural depths. It pairs exceptionally well with weathered leather and cream-toned paper stocks.</p>
+</div>
+<div class="flex gap-4">
+<div class="w-12 h-12 rounded-full bg-[#81542e] shadow-sm ring-4 ring-surface"></div>
+<div class="w-12 h-12 rounded-full bg-[#fdf9f4] shadow-sm ring-4 ring-surface"></div>
+<div class="w-12 h-12 rounded-full bg-[#e6e2dd] shadow-sm ring-4 ring-surface"></div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<div class="fixed bottom-0 left-0 w-full p-6 flex justify-center pointer-events-none z-[60]">
+<button class="pointer-events-auto h-16 px-10 bg-primary text-on-primary rounded-xl font-body font-bold text-sm tracking-widest uppercase flex items-center gap-3 shadow-[0_12px_32px_rgba(0,71,67,0.25)] hover:scale-105 active:scale-95 transition-all">
+<span class="material-symbols-outlined">share</span>
+            Share Palette
+        </button>
+</div>
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-10 pb-8 pt-4 bg-[#fdf9f4]/85 dark:bg-stone-950/85 backdrop-blur-xl md:hidden">
+<a class="flex flex-col items-center justify-center text-stone-500 p-4 hover:text-[#1F5F5B] transition-colors" href="#">
+<span class="material-symbols-outlined">photo_camera</span>
+<span class="font-sans text-[10px] uppercase tracking-widest font-bold mt-1">Live</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#1F5F5B] text-white rounded-full w-14 h-14 translate-y-[-1rem] shadow-[0_-12px_32px_rgba(28,28,25,0.06)] scale-105 transition-transform duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">palette</span>
+<span class="font-sans text-[10px] uppercase tracking-widest font-bold mt-1">Library</span>
+</a>
+</nav>
+</body></html>
