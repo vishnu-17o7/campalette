@@ -1,10 +1,26 @@
 package com.vishnu.campalette.ui.components
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.platform.LocalDensity
+import kotlin.math.sin
+import com.vishnu.campalette.ui.theme.ExpressiveSpatialSpring
+import com.vishnu.campalette.ui.theme.ExpressiveEffectsSpring
+import com.vishnu.campalette.ui.theme.ExpressiveEffectsColorSpring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -29,7 +45,9 @@ import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.History
 import androidx.compose.material.icons.rounded.Palette
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -39,6 +57,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -56,6 +75,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -64,7 +84,10 @@ import com.vishnu.campalette.PaletteColor
 import com.vishnu.campalette.R
 import com.vishnu.campalette.ui.theme.AtelierPrimary
 import com.vishnu.campalette.ui.theme.AtelierPrimaryContainer
+import com.vishnu.campalette.ui.theme.AtelierRoundedExtra
+import com.vishnu.campalette.ui.theme.AtelierRoundedLarge
 import com.vishnu.campalette.ui.theme.AtelierTheme
+import com.vishnu.campalette.ui.theme.LocalDynamicThemeColors
 
 enum class AppScreen(
     @StringRes val labelRes: Int,
@@ -100,7 +123,7 @@ fun GlassPanel(
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(32.dp))
+            .clip(RoundedCornerShape(AtelierRoundedLarge))
             .background(background)
             .padding(contentPadding),
         content = content
@@ -113,24 +136,34 @@ fun GradientPrimaryButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val dynamicColors = LocalDynamicThemeColors.current
+    val primary = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryShift else AtelierPrimary
+    val container = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryContainerShift else AtelierPrimaryContainer
+
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 1.05f else 1f,
-        animationSpec = spring(dampingRatio = 0.72f, stiffness = 500f),
+        targetValue = if (pressed) 0.94f else 1f,
+        animationSpec = ExpressiveSpatialSpring,
         label = "ctaScale"
+    )
+    val gradientTint by animateFloatAsState(
+        targetValue = if (pressed) 0.15f else 0f,
+        animationSpec = tween(durationMillis = 120),
+        label = "ctaTint"
     )
     Box(
         modifier = modifier
             .scale(scale)
-            .clip(RoundedCornerShape(48.dp))
+            .clip(RoundedCornerShape(AtelierRoundedLarge))
             .background(
                 Brush.linearGradient(
-                    colors = listOf(AtelierPrimary, AtelierPrimaryContainer),
+                    colors = listOf(container, primary),
                     start = Offset.Zero,
                     end = Offset(520f, 140f)
                 )
             )
+            .background(Color.White.copy(alpha = gradientTint), RoundedCornerShape(AtelierRoundedLarge))
             .semantics {
                 role = Role.Button
                 contentDescription = text
@@ -153,15 +186,23 @@ fun SoftActionButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.94f else 1f,
+        animationSpec = ExpressiveSpatialSpring,
+        label = "softButtonScale"
+    )
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(28.dp))
+            .scale(scale)
+            .clip(RoundedCornerShape(AtelierRoundedLarge))
             .background(AtelierTheme.colors.surfaceContainerLow)
             .semantics {
                 role = Role.Button
                 contentDescription = text
             }
-            .clickable(onClick = onClick)
+            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
             .padding(horizontal = 18.dp, vertical = 14.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -181,6 +222,17 @@ fun EditorialInputField(
     placeholder: String = "",
     onValueChange: (String) -> Unit
 ) {
+    val hasContent = value.isNotBlank()
+    val underlineHeight by animateDpAsState(
+        targetValue = if (hasContent) 2.5.dp else 1.5.dp,
+        animationSpec = tween(durationMillis = 180),
+        label = "underlineHeight"
+    )
+    val underlineAlpha by animateFloatAsState(
+        targetValue = if (hasContent) 0.9f else 0.45f,
+        animationSpec = tween(durationMillis = 180),
+        label = "underlineAlpha"
+    )
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
@@ -210,8 +262,8 @@ fun EditorialInputField(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(2.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))
+                        .height(underlineHeight)
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = underlineAlpha))
                 )
             }
         }
@@ -234,6 +286,21 @@ fun AtelierSwatch(
         stringResource(R.string.not_selected_state)
     }
     val description = stringResource(R.string.swatch_state, label)
+
+    val scale by animateFloatAsState(
+        targetValue = if (selected) 1.15f else 1f,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = 400f),
+        label = "swatchScale"
+    )
+
+    val ringWidth by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = ExpressiveEffectsSpring,
+        label = "swatchRingWidth"
+    )
+
+    val borderColor = AtelierTheme.colors.primaryFixed
+
     Column(
         modifier = modifier.widthIn(min = 56.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -241,17 +308,17 @@ fun AtelierSwatch(
     ) {
         Box(
             modifier = Modifier
-                .size(if (selected) size + 10.dp else size)
+                .size((size + 10.dp) * scale)
                 .clip(CircleShape)
                 .background(
-                    if (selected) AtelierTheme.colors.primaryFixed.copy(alpha = 0.7f)
+                    if (selected) borderColor.copy(alpha = 0.7f * scale)
                     else Color.Transparent
                 ),
             contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
-                    .size(size)
+                    .size(size * scale)
                     .clip(CircleShape)
                     .background(color)
                     .drawWithContent {
@@ -264,6 +331,15 @@ fun AtelierSwatch(
                             )
                         )
                     }
+                    .then(
+                        if (selected) Modifier.drawBehind {
+                            drawCircle(
+                                color = borderColor,
+                                radius = this.size.minDimension / 2f + 2.dp.toPx(),
+                                style = Stroke(width = (2.5f * ringWidth).dp.toPx())
+                            )
+                        } else Modifier
+                    )
                     .semantics {
                         this.selected = selected
                         role = Role.Button
@@ -287,12 +363,13 @@ fun AtelierSwatch(
 fun PaletteStrip(
     palette: List<PaletteColor>,
     selectedHex: String?,
-    labelColor: Color = MaterialTheme.colorScheme.onSurface,
     onColorSelected: (PaletteColor) -> Unit,
+    modifier: Modifier = Modifier,
+    labelColor: Color = MaterialTheme.colorScheme.onSurface,
     trailingAdd: (() -> Unit)? = null
 ) {
     val captureLabel = stringResource(R.string.capture_button)
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+    LazyRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         items(palette) { paletteColor ->
             AtelierSwatch(
                 color = Color(paletteColor.color),
@@ -351,26 +428,30 @@ fun PaletteStrip(
 @Composable
 fun FloatingBottomNav(
     currentScreen: AppScreen,
+    onScreenSelected: (AppScreen) -> Unit,
     modifier: Modifier = Modifier,
-    onLiveAction: (() -> Unit)? = null,
-    onScreenSelected: (AppScreen) -> Unit
+    isCapturing: Boolean = false,
+    isCaptured: Boolean = false,
+    onLiveAction: (() -> Unit)? = null
 ) {
+    val dynamicColors = LocalDynamicThemeColors.current
+    val dynamicPrimary = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryShift else AtelierPrimary
+    val dynamicContainer = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryContainerShift else AtelierPrimaryContainer
     val items = listOf(
-        Triple(AppScreen.Library, Icons.Rounded.Palette, AppScreen.Library.actionRes),
-        Triple(AppScreen.Editor, Icons.Rounded.AutoAwesome, AppScreen.Editor.actionRes),
-        Triple(AppScreen.Live, Icons.Rounded.CameraAlt, AppScreen.Live.actionRes),
         Triple(AppScreen.History, Icons.Rounded.History, AppScreen.History.actionRes),
+        Triple(AppScreen.Live, Icons.Rounded.CameraAlt, AppScreen.Live.actionRes),
         Triple(AppScreen.Settings, Icons.Rounded.Settings, AppScreen.Settings.actionRes)
     )
     Row(
         modifier = modifier
             .clip(RoundedCornerShape(999.dp))
-            .background(AtelierTheme.colors.surfaceContainerLow.copy(alpha = 0.9f))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+            .background(AtelierTheme.colors.surfaceContainerLow.copy(alpha = 0.92f))
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         items.forEach { (screen, icon, actionRes) ->
+            androidx.compose.runtime.key(screen) {
             val isLiveCaptureAction = screen == AppScreen.Live && currentScreen == AppScreen.Live && onLiveAction != null
             val action = if (isLiveCaptureAction) {
                 stringResource(R.string.bottom_nav_capture)
@@ -383,31 +464,38 @@ fun FloatingBottomNav(
                 stringResource(R.string.not_selected_state)
             }
             if (icon == Icons.Rounded.CameraAlt) {
+                val displayIcon = if (isCaptured) Icons.Rounded.Refresh else Icons.Rounded.CameraAlt
                 val interaction = remember { MutableInteractionSource() }
                 val pressed by interaction.collectIsPressedAsState()
                 val scale by animateFloatAsState(
-                    targetValue = if (pressed) 1.1f else 1f,
-                    animationSpec = spring(dampingRatio = 0.68f, stiffness = 480f),
+                    targetValue = if (pressed) 0.94f else 1f,
+                    animationSpec = ExpressiveSpatialSpring,
                     label = "cameraScale"
                 )
+
+                val shouldPulse = isLiveCaptureAction && !isCapturing && !isCaptured
+                val pulseTransition = rememberInfiniteTransition(label = "cameraBreathe")
+                val pulseScale by pulseTransition.animateFloat(
+                    initialValue = 1f,
+                    targetValue = 1.06f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(1800, easing = LinearEasing),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "pulseScale"
+                )
+
                 Box(
                     modifier = Modifier
-                        .scale(scale)
-                        .clip(if (isLiveCaptureAction) RoundedCornerShape(28.dp) else CircleShape)
+                        .scale(if (shouldPulse) scale * pulseScale else scale)
+                        .size(48.dp)
+                        .clip(CircleShape)
                         .background(
-                            if (isLiveCaptureAction) {
-                                Brush.linearGradient(
-                                    colors = listOf(AtelierPrimary, AtelierPrimaryContainer),
-                                    start = Offset.Zero,
-                                    end = Offset(220f, 120f)
-                                )
-                            } else {
-                                Brush.linearGradient(
-                                    colors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary),
-                                    start = Offset.Zero,
-                                    end = Offset(1f, 1f)
-                                )
-                            }
+                            Brush.linearGradient(
+                                colors = listOf(dynamicPrimary, dynamicContainer),
+                                start = Offset.Zero,
+                                end = Offset(220f, 120f)
+                            )
                         )
                         .semantics {
                             role = if (isLiveCaptureAction) Role.Button else Role.Tab
@@ -415,23 +503,52 @@ fun FloatingBottomNav(
                                 selected = currentScreen == screen
                                 stateDescription = state
                             }
-                            contentDescription = action
+                            contentDescription = if (isCapturing) "Capturing" else action
                         }
-                        .clickable(interactionSource = interaction, indication = null) {
+                        .clickable(
+                            interactionSource = interaction,
+                            indication = null,
+                            enabled = !isCapturing
+                        ) {
                             if (isLiveCaptureAction) {
                                 onLiveAction?.invoke()
                             } else {
                                 onScreenSelected(screen)
                             }
-                        }
-                        .padding(horizontal = if (isLiveCaptureAction) 18.dp else 16.dp, vertical = 16.dp),
+                        },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                    if (isCapturing && isLiveCaptureAction) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            strokeWidth = 2.5.dp,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    } else {
+                        Icon(displayIcon, contentDescription = action, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
+                    }
                 }
             } else {
+                val isSelected = currentScreen == screen
+                val interaction = remember { MutableInteractionSource() }
+                val pressed by interaction.collectIsPressedAsState()
+                val targetTint by animateColorAsState(
+                    targetValue = if (isSelected) {
+                        dynamicPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                    },
+                    animationSpec = ExpressiveEffectsColorSpring,
+                    label = "navIconTint"
+                )
+                val activeIndicatorScale by animateFloatAsState(
+                    targetValue = if (isSelected) 1f else 0f,
+                    animationSpec = ExpressiveSpatialSpring,
+                    label = "indicatorScale"
+                )
                 Box(
                     modifier = Modifier
+                        .size(48.dp)
                         .clip(CircleShape)
                         .semantics {
                             role = Role.Tab
@@ -439,21 +556,26 @@ fun FloatingBottomNav(
                             contentDescription = action
                             stateDescription = state
                         }
-                        .clickable { onScreenSelected(screen) }
-                        .padding(12.dp),
+                        .clickable(interactionSource = interaction, indication = null) { onScreenSelected(screen) },
                     contentAlignment = Alignment.Center
                 ) {
+                    if (isSelected) {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .scale(activeIndicatorScale)
+                                .background(dynamicContainer.copy(alpha = 0.22f), shape = CircleShape)
+                        )
+                    }
                     Icon(
                         imageVector = icon,
-                        contentDescription = null,
-                        tint = if (currentScreen == screen) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
-                        }
+                        contentDescription = action,
+                        tint = targetTint,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
             }
+            } // key(screen)
         }
     }
 }
@@ -466,21 +588,32 @@ fun PaletteCard(
     modifier: Modifier = Modifier,
     tag: String? = null,
     featured: Boolean = false,
+    actionIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    onActionClick: (() -> Unit)? = null,
     onClick: (() -> Unit)? = null
 ) {
-    val shape = if (featured) RoundedCornerShape(40.dp) else RoundedCornerShape(32.dp)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed) 0.94f else 1f,
+        animationSpec = ExpressiveSpatialSpring,
+        label = "paletteCardScale"
+    )
+    val shape = RoundedCornerShape(AtelierRoundedLarge)
     Column(
         modifier = modifier
+            .scale(scale)
             .clip(shape)
             .background(
-                if (featured) AtelierTheme.colors.surfaceContainerLow
+                if (pressed) AtelierTheme.colors.surfaceContainerLow
+                else if (featured) AtelierTheme.colors.surfaceContainerLow
                 else AtelierTheme.colors.surfaceContainerLowest
             )
             .semantics {
                 role = Role.Button
                 contentDescription = title
             }
-            .let { base -> if (onClick != null) base.clickable(onClick = onClick) else base }
+            .let { base -> if (onClick != null) base.clickable(interactionSource = interaction, indication = null, onClick = onClick) else base }
     ) {
         Row(
             modifier = Modifier
@@ -495,34 +628,60 @@ fun PaletteCard(
                 )
             }
         }
-        Column(
-            modifier = Modifier.padding(start = 24.dp, top = 20.dp, end = 20.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 24.dp, top = 20.dp, end = 20.dp, bottom = 24.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            if (!tag.isNullOrBlank()) {
-                AtelierLabelTag(
-                    text = tag,
-                    color = if (featured) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (!tag.isNullOrBlank()) {
+                    AtelierLabelTag(
+                        text = tag,
+                        color = if (featured) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                    )
+                }
+                Text(
+                    text = title,
+                    style = if (featured) {
+                        MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold)
+                    } else {
+                        MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+                    },
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            Text(
-                text = title,
-                style = if (featured) {
-                    MaterialTheme.typography.headlineLarge.copy(fontStyle = FontStyle.Italic)
-                } else {
-                    MaterialTheme.typography.headlineSmall.copy(fontStyle = FontStyle.Italic)
-                },
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = subtitle,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 3,
-                overflow = TextOverflow.Ellipsis
-            )
+            if (actionIcon != null && onActionClick != null) {
+                Box(
+                    modifier = Modifier
+                        .padding(start = 12.dp)
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
+                        .clickable(onClick = onActionClick),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = actionIcon,
+                        contentDescription = title,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -542,5 +701,134 @@ fun TechnicalValue(
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
+    }
+}
+
+@Composable
+fun WavyProgressIndicator(
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.primary,
+    strokeWidth: Dp = 4.dp,
+    waveLength: Dp = 24.dp,
+    amplitude: Dp = 6.dp
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "wavyProgress")
+    val phaseShift by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 2f * Math.PI.toFloat(),
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "phaseShift"
+    )
+
+    val density = LocalDensity.current
+    Canvas(modifier = modifier) {
+        val width = size.width
+        val height = size.height
+        val midY = height / 2f
+        val pxWaveLength = with(density) { waveLength.toPx() }
+        val pxAmplitude = with(density) { amplitude.toPx() }
+        val pxStrokeWidth = with(density) { strokeWidth.toPx() }
+
+        val path = Path().apply {
+            moveTo(0f, midY)
+            var x = 0f
+            while (x < width) {
+                val relativeX = x / pxWaveLength
+                val y = midY + pxAmplitude * sin(relativeX * 2f * Math.PI.toFloat() - phaseShift)
+                lineTo(x, y)
+                x += 2f
+            }
+            lineTo(width, midY)
+        }
+
+        drawPath(
+            path = path,
+            color = color,
+            style = Stroke(
+                width = pxStrokeWidth,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round
+            )
+        )
+    }
+}
+
+@Composable
+fun ExpressiveSplitButton(
+    primaryText: String,
+    secondaryIcon: androidx.compose.ui.graphics.vector.ImageVector,
+    modifier: Modifier = Modifier,
+    onPrimaryClick: () -> Unit,
+    onSecondaryClick: () -> Unit
+) {
+    val dynamicColors = LocalDynamicThemeColors.current
+    val dynamicPrimary = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryShift else AtelierPrimary
+    val dynamicContainer = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryContainerShift else AtelierPrimaryContainer
+
+    val interactionPrimary = remember { MutableInteractionSource() }
+    val pressedPrimary by interactionPrimary.collectIsPressedAsState()
+    val scalePrimary by animateFloatAsState(
+        targetValue = if (pressedPrimary) 0.94f else 1f,
+        animationSpec = ExpressiveSpatialSpring,
+        label = "splitPrimaryScale"
+    )
+
+    val interactionSecondary = remember { MutableInteractionSource() }
+    val pressedSecondary by interactionSecondary.collectIsPressedAsState()
+    val scaleSecondary by animateFloatAsState(
+        targetValue = if (pressedSecondary) 0.94f else 1f,
+        animationSpec = ExpressiveSpatialSpring,
+        label = "splitSecondaryScale"
+    )
+
+    Row(
+        modifier = modifier
+            .height(56.dp)
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .scale(scalePrimary)
+                .clip(RoundedCornerShape(topStart = AtelierRoundedLarge, bottomStart = AtelierRoundedLarge, topEnd = 4.dp, bottomEnd = 4.dp))
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(dynamicPrimary, dynamicContainer),
+                        start = Offset.Zero,
+                        end = Offset(240f, 100f)
+                    )
+                )
+                .clickable(interactionSource = interactionPrimary, indication = null, onClick = onPrimaryClick)
+                .padding(horizontal = 20.dp, vertical = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = primaryText,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }
+
+        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(2.dp))
+
+        Box(
+            modifier = Modifier
+                .scale(scaleSecondary)
+                .clip(RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = AtelierRoundedLarge, bottomEnd = AtelierRoundedLarge))
+                .background(dynamicPrimary)
+                .clickable(interactionSource = interactionSecondary, indication = null, onClick = onSecondaryClick)
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = secondaryIcon,
+                contentDescription = primaryText,
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
+        }
     }
 }

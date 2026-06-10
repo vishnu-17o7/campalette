@@ -1,8 +1,10 @@
 package com.vishnu.campalette.ui.theme
 
 import android.app.Activity
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -47,6 +49,38 @@ private val AtelierColorScheme = lightColorScheme(
     scrim = AtelierOnSurface
 )
 
+private val AtelierDarkColorScheme = darkColorScheme(
+    primary = AtelierDarkPrimary,
+    onPrimary = AtelierDarkOnPrimary,
+    primaryContainer = AtelierDarkPrimaryContainer,
+    onPrimaryContainer = AtelierDarkOnPrimaryContainer,
+    secondary = AtelierDarkSecondary,
+    onSecondary = AtelierDarkOnSecondary,
+    secondaryContainer = AtelierDarkSecondaryContainer,
+    onSecondaryContainer = AtelierDarkOnSecondaryContainer,
+    tertiary = AtelierDarkTertiary,
+    onTertiary = AtelierDarkOnTertiary,
+    tertiaryContainer = AtelierDarkTertiaryContainer,
+    onTertiaryContainer = AtelierDarkOnTertiaryContainer,
+    background = AtelierDarkBackground,
+    onBackground = AtelierDarkOnBackground,
+    surface = AtelierDarkSurface,
+    onSurface = AtelierDarkOnSurface,
+    surfaceVariant = AtelierDarkSurfaceVariant,
+    onSurfaceVariant = AtelierDarkOnSurfaceVariant,
+    outline = AtelierDarkOutline,
+    outlineVariant = AtelierDarkOutlineVariant,
+    inversePrimary = AtelierDarkInversePrimary,
+    inverseSurface = AtelierDarkInverseSurface,
+    inverseOnSurface = AtelierDarkInverseOnSurface,
+    error = AtelierDarkError,
+    onError = AtelierDarkOnError,
+    errorContainer = AtelierDarkErrorContainer,
+    onErrorContainer = AtelierDarkOnErrorContainer,
+    surfaceTint = AtelierDarkSurfaceTint,
+    scrim = AtelierDarkOnSurface
+)
+
 @Immutable
 data class AtelierColors(
     val primaryFixed: Color = AtelierPrimaryFixed,
@@ -64,6 +98,22 @@ data class AtelierColors(
     val surfaceContainerHighest: Color = AtelierSurfaceContainerHighest
 )
 
+private val DarkAtelierColors = AtelierColors(
+    primaryFixed = AtelierDarkPrimaryFixed,
+    primaryFixedDim = AtelierDarkPrimaryFixedDim,
+    secondaryFixed = AtelierDarkSecondaryFixed,
+    secondaryFixedDim = AtelierDarkSecondaryFixedDim,
+    tertiaryFixed = AtelierDarkTertiaryFixed,
+    tertiaryFixedDim = AtelierDarkTertiaryFixedDim,
+    surfaceBright = AtelierDarkSurfaceBright,
+    surfaceDim = AtelierDarkSurfaceDim,
+    surfaceContainerLowest = AtelierDarkSurfaceContainerLowest,
+    surfaceContainerLow = AtelierDarkSurfaceContainerLow,
+    surfaceContainer = AtelierDarkSurfaceContainer,
+    surfaceContainerHigh = AtelierDarkSurfaceContainerHigh,
+    surfaceContainerHighest = AtelierDarkSurfaceContainerHighest
+)
+
 val LocalAtelierColors = staticCompositionLocalOf { AtelierColors() }
 
 object AtelierTheme {
@@ -73,23 +123,29 @@ object AtelierTheme {
 }
 
 @Composable
-fun CampaletteTheme(content: @Composable () -> Unit) {
+fun CampaletteTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    val colorScheme = if (darkTheme) AtelierDarkColorScheme else AtelierColorScheme
+    val atelierColors = if (darkTheme) DarkAtelierColors else AtelierColors()
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            val systemBarColor = AtelierSurface.copy(alpha = 0.95f)
-            window.statusBarColor = systemBarColor.toArgb()
-            window.navigationBarColor = systemBarColor.toArgb()
+            val systemBarColor = colorScheme.surface
+            window.statusBarColor = systemBarColor.copy(alpha = 0.95f).toArgb()
+            window.navigationBarColor = systemBarColor.copy(alpha = 0.95f).toArgb()
             val isLightBars = systemBarColor.luminance() > 0.5f
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = isLightBars
             WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = isLightBars
         }
     }
 
-    CompositionLocalProvider(LocalAtelierColors provides AtelierColors()) {
+    CompositionLocalProvider(LocalAtelierColors provides atelierColors) {
         MaterialTheme(
-            colorScheme = AtelierColorScheme,
+            colorScheme = colorScheme,
             typography = Typography,
             shapes = Shapes,
             content = content

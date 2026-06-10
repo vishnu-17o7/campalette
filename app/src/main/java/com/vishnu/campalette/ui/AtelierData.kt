@@ -22,6 +22,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ExecutorService
 import kotlin.math.max
+import kotlin.math.min
 
 object AtelierData {
     fun takePhoto(
@@ -279,6 +280,59 @@ object AtelierData {
     }
 
     fun Float.format0(): String = String.format("%.0f", this)
+
+    fun downscaleBitmap(bitmap: Bitmap, maxDimension: Int): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+        if (width <= maxDimension && height <= maxDimension) return bitmap
+        val ratio = min(maxDimension.toFloat() / width, maxDimension.toFloat() / height)
+        val newWidth = (width * ratio).toInt().coerceAtLeast(1)
+        val newHeight = (height * ratio).toInt().coerceAtLeast(1)
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+    }
+
+    fun encodeStudyJson(studies: List<PaletteStudy>): String {
+        val sb = StringBuilder("[")
+        studies.forEachIndexed { i, s ->
+            if (i > 0) sb.append(",")
+            sb.append("""{"n":"${s.name}","c":"${s.capturedAt}","s":"${s.source}","cl":[""")
+            s.colors.forEachIndexed { j, c ->
+                if (j > 0) sb.append(",")
+                sb.append("""{"nm":"${c.name}","h":${c.color},"hx":"${c.hexCode}","r":${c.red},"g":${c.green},"b":${c.blue}}""")
+            }
+            sb.append("]}")
+        }
+        sb.append("]")
+        return sb.toString()
+    }
+
+    fun decodeStudyJson(json: String): List<PaletteStudy> {
+        if (json.isBlank() || json == "[]" || json == "null") return emptyList()
+        val studies = mutableListOf<PaletteStudy>()
+        try {
+            val blockRegex = Regex("""\{"n":"([^"]+)","c":"([^"]+)","s":"([^"]+)","cl":\[(.*?)\]\}""")
+            blockRegex.findAll(json).forEach { match ->
+                val name = match.groupValues[1]
+                val capturedAt = match.groupValues[2]
+                val source = match.groupValues[3]
+                val colorsRaw = match.groupValues[4]
+                val colors = mutableListOf<PaletteColor>()
+                val colorRegex = Regex("""\{"nm":"([^"]+)","h":(-?\d+),"hx":"([^"]+)","r":(\d+),"g":(\d+),"b":(\d+)\}""")
+                colorRegex.findAll(colorsRaw).forEach { cm ->
+                    colors.add(PaletteColor(
+                        name = cm.groupValues[1],
+                        color = cm.groupValues[2].toInt(),
+                        hexCode = cm.groupValues[3],
+                        red = cm.groupValues[4].toInt(),
+                        green = cm.groupValues[5].toInt(),
+                        blue = cm.groupValues[6].toInt()
+                    ))
+                }
+                studies.add(PaletteStudy(name = name, colors = colors, capturedAt = capturedAt, source = source))
+            }
+        } catch (_: Exception) { }
+        return studies
+    }
 
     private fun Int.toHexCode(): String = String.format("#%06X", 0xFFFFFF and this)
 
