@@ -1,6 +1,5 @@
 package com.vishnu.campalette.ui.theme
 
-import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
@@ -9,13 +8,8 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
 
 private val AtelierColorScheme = lightColorScheme(
     primary = AtelierPrimary,
@@ -115,6 +109,7 @@ private val DarkAtelierColors = AtelierColors(
 )
 
 val LocalAtelierColors = staticCompositionLocalOf { AtelierColors() }
+val LocalReducedMotion = staticCompositionLocalOf { false }
 
 object AtelierTheme {
     val colors: AtelierColors
@@ -129,19 +124,6 @@ fun CampaletteTheme(
 ) {
     val colorScheme = if (darkTheme) AtelierDarkColorScheme else AtelierColorScheme
     val atelierColors = if (darkTheme) DarkAtelierColors else AtelierColors()
-
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            val systemBarColor = colorScheme.surface
-            window.statusBarColor = systemBarColor.copy(alpha = 0.95f).toArgb()
-            window.navigationBarColor = systemBarColor.copy(alpha = 0.95f).toArgb()
-            val isLightBars = systemBarColor.luminance() > 0.5f
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = isLightBars
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = isLightBars
-        }
-    }
 
     CompositionLocalProvider(LocalAtelierColors provides atelierColors) {
         MaterialTheme(

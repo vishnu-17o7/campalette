@@ -23,6 +23,10 @@ import java.util.Locale
 import java.util.concurrent.ExecutorService
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.PI
 
 object AtelierData {
     fun takePhoto(
@@ -336,13 +340,446 @@ object AtelierData {
 
     private fun Int.toHexCode(): String = String.format("#%06X", 0xFFFFFF and this)
 
+    fun rgbToHsl(red: Int, green: Int, blue: Int): FloatArray {
+        val r = red / 255f
+        val g = green / 255f
+        val b = blue / 255f
+        val max = max(r, max(g, b))
+        val min = min(r, min(g, b))
+        val l = (max + min) / 2f
+        if (max == min) return floatArrayOf(0f, 0f, l * 100f)
+        val d = max - min
+        val s = if (l > 0.5f) d / (2f - max - min) else d / (max + min)
+        val h = when (max) {
+            r -> ((g - b) / d + (if (g < b) 6 else 0)) % 6
+            g -> (b - r) / d + 2
+            else -> (r - g) / d + 4
+        } * 60f
+        return floatArrayOf(h, s * 100f, l * 100f)
+    }
+
+    fun hslToRgb(h: Float, s: Float, l: Float): Int {
+        val hf = h / 360f
+        val sf = s / 100f
+        val lf = l / 100f
+        if (sf == 0f) {
+            val v = (lf * 255).toInt()
+            return android.graphics.Color.rgb(v, v, v)
+        }
+        val q = if (lf < 0.5f) lf * (1 + sf) else lf + sf - lf * sf
+        val p = 2 * lf - q
+        fun hue2rgb(p: Float, q: Float, t: Float): Float {
+            var tt = t
+            if (tt < 0) tt += 1f
+            if (tt > 1) tt -= 1f
+            return when {
+                tt < 1f / 6f -> p + (q - p) * 6f * tt
+                tt < 1f / 2f -> q
+                tt < 2f / 3f -> p + (q - p) * (2f / 3f - tt) * 6f
+                else -> p
+            }
+        }
+        val r = (hue2rgb(p, q, hf + 1f / 3f) * 255).toInt()
+        val g = (hue2rgb(p, q, hf) * 255).toInt()
+        val b = (hue2rgb(p, q, hf - 1f / 3f) * 255).toInt()
+        return android.graphics.Color.rgb(r.coerceIn(0, 255), g.coerceIn(0, 255), b.coerceIn(0, 255))
+    }
+
+    fun generateRelatedColors(seedColor: Int): Triple<List<PaletteColor>, List<PaletteColor>, List<PaletteColor>> {
+        val hsv = FloatArray(3)
+        android.graphics.Color.colorToHSV(seedColor, hsv)
+        val tints = (1..4).map { i ->
+            val t = i / 5f
+            val newV = hsv[2] + (1f - hsv[2]) * t
+            val newS = hsv[1] * (1f - t * 0.5f)
+            paletteColor("Tint $i", android.graphics.Color.HSVToColor(floatArrayOf(hsv[0], newS.coerceIn(0f, 1f), newV.coerceIn(0f, 1f))))
+        }
+        val shades = (1..4).map { i ->
+            val t = i / 5f
+            val newV = hsv[2] * (1f - t)
+            val newS = (hsv[1] * (1f + t * 0.3f)).coerceIn(0f, 1f)
+            paletteColor("Shade $i", android.graphics.Color.HSVToColor(floatArrayOf(hsv[0], newS, newV.coerceIn(0f, 1f))))
+        }
+        val tones = (1..4).map { i ->
+            val t = i / 5f
+            val newS = hsv[1] * (1f - t * 0.6f)
+            val newV = hsv[2] + (0.5f - hsv[2]) * t
+            paletteColor("Tone $i", android.graphics.Color.HSVToColor(floatArrayOf(hsv[0], newS.coerceIn(0f, 1f), newV.coerceIn(0f, 1f))))
+        }
+        return Triple(tints, shades, tones)
+    }
+
+    private val namedColors = listOf(
+        "Maroon" to 0xFF800000.toInt(),
+        "Dark Red" to 0xFF8B0000.toInt(),
+        "Brown" to 0xFFA52A2A.toInt(),
+        "Firebrick" to 0xFFB22222.toInt(),
+        "Crimson" to 0xFFDC143C.toInt(),
+        "Red" to 0xFFFF0000.toInt(),
+        "Tomato" to 0xFFFF6347.toInt(),
+        "Coral" to 0xFFFF7F50.toInt(),
+        "Indian Red" to 0xFFCD5C5C.toInt(),
+        "Light Coral" to 0xFFF08080.toInt(),
+        "Dark Salmon" to 0xFFE9967A.toInt(),
+        "Salmon" to 0xFFFA8072.toInt(),
+        "Light Salmon" to 0xFFFFA07A.toInt(),
+        "Orange Red" to 0xFFFF4500.toInt(),
+        "Dark Orange" to 0xFFFF8C00.toInt(),
+        "Orange" to 0xFFFFA500.toInt(),
+        "Gold" to 0xFFFFD700.toInt(),
+        "Dark Golden Rod" to 0xFFB8860B.toInt(),
+        "Golden Rod" to 0xFFDAA520.toInt(),
+        "Pale Golden Rod" to 0xFFEEE8AA.toInt(),
+        "Dark Khaki" to 0xFFBDB76B.toInt(),
+        "Khaki" to 0xFFF0E68C.toInt(),
+        "Olive" to 0xFF808000.toInt(),
+        "Yellow" to 0xFFFFFF00.toInt(),
+        "Yellow Green" to 0xFF9ACD32.toInt(),
+        "Dark Olive Green" to 0xFF556B2F.toInt(),
+        "Olive Drab" to 0xFF6B8E23.toInt(),
+        "Lawn Green" to 0xFF7CFC00.toInt(),
+        "Chartreuse" to 0xFF7FFF00.toInt(),
+        "Green Yellow" to 0xFFADFF2F.toInt(),
+        "Dark Green" to 0xFF006400.toInt(),
+        "Green" to 0xFF008000.toInt(),
+        "Forest Green" to 0xFF228B22.toInt(),
+        "Lime" to 0xFF00FF00.toInt(),
+        "Lime Green" to 0xFF32CD32.toInt(),
+        "Spring Green" to 0xFF00FF7F.toInt(),
+        "Sea Green" to 0xFF2E8B57.toInt(),
+        "Medium Sea Green" to 0xFF3CB371.toInt(),
+        "Light Sea Green" to 0xFF20B2AA.toInt(),
+        "Dark Cyan" to 0xFF008B8B.toInt(),
+        "Teal" to 0xFF008080.toInt(),
+        "Aqua" to 0xFF00FFFF.toInt(),
+        "Dark Turquoise" to 0xFF00CED1.toInt(),
+        "Turquoise" to 0xFF40E0D0.toInt(),
+        "Medium Turquoise" to 0xFF48D1CC.toInt(),
+        "Cadet Blue" to 0xFF5F9EA0.toInt(),
+        "Steel Blue" to 0xFF4682B4.toInt(),
+        "Light Steel Blue" to 0xFFB0C4DE.toInt(),
+        "Powder Blue" to 0xFFB0E0E6.toInt(),
+        "Light Blue" to 0xFFADD8E6.toInt(),
+        "Sky Blue" to 0xFF87CEEB.toInt(),
+        "Deep Sky Blue" to 0xFF00BFFF.toInt(),
+        "Dodger Blue" to 0xFF1E90FF.toInt(),
+        "Cornflower Blue" to 0xFF6495ED.toInt(),
+        "Royal Blue" to 0xFF4169E1.toInt(),
+        "Blue" to 0xFF0000FF.toInt(),
+        "Medium Blue" to 0xFF0000CD.toInt(),
+        "Dark Blue" to 0xFF00008B.toInt(),
+        "Navy" to 0xFF000080.toInt(),
+        "Midnight Blue" to 0xFF191970.toInt(),
+        "Lavender" to 0xFFE6E6FA.toInt(),
+        "Thistle" to 0xFFD8BFD8.toInt(),
+        "Plum" to 0xFFDDA0DD.toInt(),
+        "Violet" to 0xFFEE82EE.toInt(),
+        "Orchid" to 0xFFDA70D6.toInt(),
+        "Magenta" to 0xFFFF00FF.toInt(),
+        "Medium Orchid" to 0xFFBA55D3.toInt(),
+        "Medium Purple" to 0xFF9370DB.toInt(),
+        "Blue Violet" to 0xFF8A2BE2.toInt(),
+        "Dark Violet" to 0xFF9400D3.toInt(),
+        "Dark Orchid" to 0xFF9932CC.toInt(),
+        "Dark Magenta" to 0xFF8B008B.toInt(),
+        "Purple" to 0xFF800080.toInt(),
+        "Indigo" to 0xFF4B0082.toInt(),
+        "Slate Blue" to 0xFF6A5ACD.toInt(),
+        "Dark Slate Blue" to 0xFF483D8B.toInt(),
+        "Rebecca Purple" to 0xFF663399.toInt(),
+        "Pink" to 0xFFFFC0CB.toInt(),
+        "Light Pink" to 0xFFFFB6C1.toInt(),
+        "Hot Pink" to 0xFFFF69B4.toInt(),
+        "Deep Pink" to 0xFFFF1493.toInt(),
+        "Pale Violet Red" to 0xFFDB7093.toInt(),
+        "Medium Violet Red" to 0xFFC71585.toInt(),
+        "Rosy Brown" to 0xFFBC8F8F.toInt(),
+        "Sandy Brown" to 0xFFF4A460.toInt(),
+        "Goldenrod" to 0xFFDAA520.toInt(),
+        "Peru" to 0xFFCD853F.toInt(),
+        "Chocolate" to 0xFFD2691E.toInt(),
+        "Saddle Brown" to 0xFF8B4513.toInt(),
+        "Sienna" to 0xFFA0522D.toInt(),
+        "Burlywood" to 0xFFDEB887.toInt(),
+        "Tan" to 0xFFD2B48C.toInt(),
+        "Wheat" to 0xFFF5DEB3.toInt(),
+        "Navajo White" to 0xFFFFDEAD.toInt(),
+        "Bisque" to 0xFFFFE4C4.toInt(),
+        "Blanched Almond" to 0xFFFFEBCD.toInt(),
+        "Antique White" to 0xFFFAEBD7.toInt(),
+        "Linen" to 0xFFFAF0E6.toInt(),
+        "Old Lace" to 0xFFFDF5E6.toInt(),
+        "Floral White" to 0xFFFFFAF0.toInt(),
+        "Ivory" to 0xFFFFFFF0.toInt(),
+        "Honeydew" to 0xFFF0FFF0.toInt(),
+        "Mint Cream" to 0xFFF5FFFA.toInt(),
+        "Azure" to 0xFFF0FFFF.toInt(),
+        "Alice Blue" to 0xFFF0F8FF.toInt(),
+        "Ghost White" to 0xFFF8F8FF.toInt(),
+        "White Smoke" to 0xFFF5F5F5.toInt(),
+        "Seashell" to 0xFFFFF5EE.toInt(),
+        "Beige" to 0xFFF5F5DC.toInt(),
+        "Cornsilk" to 0xFFFFF8DC.toInt(),
+        "Lemon Chiffon" to 0xFFFFFACD.toInt(),
+        "Papaya Whip" to 0xFFFFEFD5.toInt(),
+        "Peach Puff" to 0xFFFFDAB9.toInt(),
+        "Moccasin" to 0xFFFFE4B5.toInt(),
+        "Pale Goldenrod" to 0xFFEEE8AA.toInt(),
+        "Misty Rose" to 0xFFFFE4E1.toInt(),
+        "Lavender Blush" to 0xFFFFF0F5.toInt(),
+        "Snow" to 0xFFFFFAFA.toInt(),
+        "White" to 0xFFFFFFFF.toInt(),
+        "Black" to 0xFF000000.toInt(),
+        "Dark Slate Gray" to 0xFF2F4F4F.toInt(),
+        "Dim Gray" to 0xFF696969.toInt(),
+        "Slate Gray" to 0xFF708090.toInt(),
+        "Light Slate Gray" to 0xFF778899.toInt(),
+        "Gray" to 0xFF808080.toInt(),
+        "Dark Gray" to 0xFFA9A9A9.toInt(),
+        "Silver" to 0xFFC0C0C0.toInt(),
+        "Light Gray" to 0xFFD3D3D3.toInt(),
+        "Gainsboro" to 0xFFDCDCDC.toInt(),
+        "Crimson" to 0xFFDC143C.toInt(),
+        "Cyan" to 0xFF00FFFF.toInt(),
+        "Aquamarine" to 0xFF7FFFD4.toInt(),
+        "Medium Aquamarine" to 0xFF66CDAA.toInt(),
+        "Pale Green" to 0xFF98FB98.toInt(),
+        "Light Green" to 0xFF90EE90.toInt(),
+        "Dark Sea Green" to 0xFF8FBC8F.toInt(),
+        "Sea Green" to 0xFF2E8B57.toInt(),
+        "Rosy Brown" to 0xFFBC8F8F.toInt(),
+        "Sandy Brown" to 0xFFF4A460.toInt(),
+        "Peru" to 0xFFCD853F.toInt(),
+        "Chocolate" to 0xFFD2691E.toInt(),
+        "Saddle Brown" to 0xFF8B4513.toInt(),
+        "Sienna" to 0xFFA0522D.toInt(),
+        "Burlywood" to 0xFFDEB887.toInt(),
+        "Tan" to 0xFFD2B48C.toInt(),
+        "Wheat" to 0xFFF5DEB3.toInt(),
+        "Navajo White" to 0xFFFFDEAD.toInt(),
+        "Bisque" to 0xFFFFE4C4.toInt(),
+        "Blanched Almond" to 0xFFFFEBCD.toInt(),
+        "Antique White" to 0xFFFAEBD7.toInt(),
+        "Linen" to 0xFFFAF0E6.toInt(),
+        "Old Lace" to 0xFFFDF5E6.toInt(),
+        "Floral White" to 0xFFFFFAF0.toInt(),
+        "Ivory" to 0xFFFFFFF0.toInt(),
+        "Honeydew" to 0xFFF0FFF0.toInt(),
+        "Mint Cream" to 0xFFF5FFFA.toInt(),
+        "Azure" to 0xFFF0FFFF.toInt(),
+        "Alice Blue" to 0xFFF0F8FF.toInt(),
+        "Ghost White" to 0xFFF8F8FF.toInt(),
+        "White Smoke" to 0xFFF5F5F5.toInt(),
+        "Seashell" to 0xFFFFF5EE.toInt(),
+        "Beige" to 0xFFF5F5DC.toInt(),
+        "Cornsilk" to 0xFFFFF8DC.toInt(),
+        "Lemon Chiffon" to 0xFFFFFACD.toInt(),
+        "Papaya Whip" to 0xFFFFEFD5.toInt(),
+        "Peach Puff" to 0xFFFFDAB9.toInt(),
+        "Moccasin" to 0xFFFFE4B5.toInt(),
+        "Pale Goldenrod" to 0xFFEEE8AA.toInt(),
+        "Misty Rose" to 0xFFFFE4E1.toInt(),
+        "Lavender Blush" to 0xFFFFF0F5.toInt(),
+        "Snow" to 0xFFFFFAFA.toInt(),
+        "White" to 0xFFFFFFFF.toInt(),
+        "Black" to 0xFF000000.toInt(),
+        "Dark Slate Gray" to 0xFF2F4F4F.toInt(),
+        "Dim Gray" to 0xFF696969.toInt(),
+        "Slate Gray" to 0xFF708090.toInt(),
+        "Light Slate Gray" to 0xFF778899.toInt(),
+        "Gray" to 0xFF808080.toInt(),
+        "Dark Gray" to 0xFFA9A9A9.toInt(),
+        "Silver" to 0xFFC0C0C0.toInt(),
+        "Light Gray" to 0xFFD3D3D3.toInt(),
+        "Gainsboro" to 0xFFDCDCDC.toInt()
+    )
+
+    fun guessColorName(color: Int): String {
+        val r = android.graphics.Color.red(color)
+        val g = android.graphics.Color.green(color)
+        val b = android.graphics.Color.blue(color)
+        var bestName = "Custom"
+        var bestDist = Int.MAX_VALUE
+        namedColors.forEach { (name, rgb) ->
+            val nr = android.graphics.Color.red(rgb)
+            val ng = android.graphics.Color.green(rgb)
+            val nb = android.graphics.Color.blue(rgb)
+            val dist = (r - nr) * (r - nr) + (g - ng) * (g - ng) + (b - nb) * (b - nb)
+            if (dist < bestDist) {
+                bestDist = dist
+                bestName = name
+            }
+        }
+        return bestName
+    }
+
+    data class PaletteStats(
+        val avgSaturation: Float,
+        val warmth: String,
+        val contrastRatio: Float,
+        val lightestHex: String,
+        val darkestHex: String
+    )
+
+    fun paletteStats(palette: List<PaletteColor>): PaletteStats {
+        if (palette.isEmpty()) return PaletteStats(0f, "Neutral", 1f, "#000000", "#FFFFFF")
+        var totalSat = 0f
+        var hueSin = 0.0
+        var hueCos = 0.0
+        var lightest = palette.first()
+        var darkest = palette.first()
+        palette.forEach { pc ->
+            val hsv = FloatArray(3)
+            android.graphics.Color.colorToHSV(pc.color, hsv)
+            totalSat += hsv[1]
+            val hueRadians = hsv[0] * PI / 180.0
+            hueSin += sin(hueRadians)
+            hueCos += cos(hueRadians)
+            val lum = android.graphics.Color.red(pc.color) * 0.299f + android.graphics.Color.green(pc.color) * 0.587f + android.graphics.Color.blue(pc.color) * 0.114f
+            val lightLum = android.graphics.Color.red(lightest.color) * 0.299f + android.graphics.Color.green(lightest.color) * 0.587f + android.graphics.Color.blue(lightest.color) * 0.114f
+            val darkLum = android.graphics.Color.red(darkest.color) * 0.299f + android.graphics.Color.green(darkest.color) * 0.587f + android.graphics.Color.blue(darkest.color) * 0.114f
+            if (lum > lightLum) lightest = pc
+            if (lum < darkLum) darkest = pc
+        }
+        val avgSat = totalSat / palette.size
+        val avgHue = ((atan2(hueSin, hueCos) * 180.0 / PI + 360.0) % 360.0).toFloat()
+        val warmth = when {
+            avgHue in 0f..60f || avgHue >= 300f -> "Warm"
+            avgHue in 120f..180f -> "Cool"
+            else -> "Neutral"
+        }
+        val l1 = android.graphics.Color.luminance(lightest.color).toFloat() + 0.05f
+        val l2 = android.graphics.Color.luminance(darkest.color).toFloat() + 0.05f
+        val contrast = max(l1, l2) / min(l1, l2)
+        return PaletteStats(avgSat * 100f, warmth, contrast, lightest.hexCode, darkest.hexCode)
+    }
+
+    fun exportCss(palette: List<PaletteColor>): String {
+        return palette.mapIndexed { i, c ->
+            "  --color-${i + 1}: ${c.hexCode}; /* ${c.name} */"
+        }.joinToString("\n", "/* Campalette CSS Export */\n:root {\n", "\n}")
+    }
+
+    fun exportSwift(palette: List<PaletteColor>): String {
+        return palette.mapIndexed { i, c ->
+            "let color${i + 1} = UIColor(red: ${c.red / 255f}, green: ${c.green / 255f}, blue: ${c.blue / 255f}, alpha: 1.0) // ${c.name}"
+        }.joinToString("\n", "// Campalette Swift Export\n", "\n")
+    }
+
+    fun exportAndroidRes(palette: List<PaletteColor>): String {
+        return palette.mapIndexed { i, c ->
+            "    <color name=\"palette_color_${i + 1}\">${c.hexCode}</color> <!-- ${c.name} -->"
+        }.joinToString("\n", "<!-- Campalette Android Export -->\n<resources>\n", "\n</resources>")
+    }
+
+    fun exportFigma(palette: List<PaletteColor>): String {
+        val entries = palette.mapIndexed { i, c ->
+            "  {\"name\": \"${c.name}\", \"color\": {\"r\": ${c.red / 255f}, \"g\": ${c.green / 255f}, \"b\": ${c.blue / 255f}, \"a\": 1}}"
+        }.joinToString(",\n")
+        return "[\n$entries\n]"
+    }
+
+    enum class ColorBlindnessType { Protanopia, Deuteranopia, Tritanopia }
+
+    private val protanopiaMatrix = floatArrayOf(
+        0.567f, 0.433f, 0f, 0f, 0f,
+        0.558f, 0.442f, 0f, 0f, 0f,
+        0f, 0.242f, 0.758f, 0f, 0f,
+        0f, 0f, 0f, 1f, 0f
+    )
+
+    private val deuteranopiaMatrix = floatArrayOf(
+        0.625f, 0.375f, 0f, 0f, 0f,
+        0.7f, 0.3f, 0f, 0f, 0f,
+        0f, 0.3f, 0.7f, 0f, 0f,
+        0f, 0f, 0f, 1f, 0f
+    )
+
+    private val tritanopiaMatrix = floatArrayOf(
+        0.95f, 0.05f, 0f, 0f, 0f,
+        0f, 0.433f, 0.567f, 0f, 0f,
+        0f, 0.475f, 0.525f, 0f, 0f,
+        0f, 0f, 0f, 1f, 0f
+    )
+
+    fun applyColorBlindness(color: Int, type: ColorBlindnessType): Int {
+        val matrix = when (type) {
+            ColorBlindnessType.Protanopia -> protanopiaMatrix
+            ColorBlindnessType.Deuteranopia -> deuteranopiaMatrix
+            ColorBlindnessType.Tritanopia -> tritanopiaMatrix
+        }
+        val r = android.graphics.Color.red(color)
+        val g = android.graphics.Color.green(color)
+        val b = android.graphics.Color.blue(color)
+        val newR = (matrix[0] * r + matrix[1] * g + matrix[2] * b).toInt().coerceIn(0, 255)
+        val newG = (matrix[5] * r + matrix[6] * g + matrix[7] * b).toInt().coerceIn(0, 255)
+        val newB = (matrix[10] * r + matrix[11] * g + matrix[12] * b).toInt().coerceIn(0, 255)
+        return android.graphics.Color.rgb(newR, newG, newB)
+    }
+
+    fun checkColorBlindnessConflict(colorA: Int, colorB: Int, type: ColorBlindnessType): Boolean {
+        val simA = applyColorBlindness(colorA, type)
+        val simB = applyColorBlindness(colorB, type)
+        val dr = android.graphics.Color.red(simA) - android.graphics.Color.red(simB)
+        val dg = android.graphics.Color.green(simA) - android.graphics.Color.green(simB)
+        val db = android.graphics.Color.blue(simA) - android.graphics.Color.blue(simB)
+        val distance = dr * dr + dg * dg + db * db
+        return distance < 5000
+    }
+
+    fun generateShareBitmap(palette: List<PaletteColor>, title: String, width: Int = 1080, height: Int = 1920): Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+        canvas.drawColor(android.graphics.Color.parseColor("#FDF9F4"))
+        val titlePaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.parseColor("#1C1C19")
+            textSize = 72f
+            typeface = android.graphics.Typeface.create("serif", android.graphics.Typeface.NORMAL)
+        }
+        val subtitlePaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.parseColor("#454D49")
+            textSize = 36f
+            typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL)
+        }
+        val hexPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.parseColor("#1C1C19")
+            textSize = 32f
+            typeface = android.graphics.Typeface.create("monospace", android.graphics.Typeface.NORMAL)
+        }
+        val brandPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = android.graphics.Color.parseColor("#004743")
+            textSize = 28f
+            typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.BOLD)
+        }
+        val margin = 80f
+        var y = 200f
+        canvas.drawText(title, margin, y, titlePaint)
+        y += 60f
+        canvas.drawText("${palette.size} colors · Campalette", margin, y, subtitlePaint)
+        y += 120f
+        val swatchHeight = (height - y.toInt() - 300) / palette.size.coerceAtLeast(1)
+        palette.forEach { pc ->
+            paint.color = pc.color
+            canvas.drawRoundRect(margin, y, width - margin, y + swatchHeight - 20, 24f, 24f, paint)
+            val textY = y + swatchHeight / 2f + 12f
+            val textColor = if (android.graphics.Color.luminance(pc.color) > 0.5f) android.graphics.Color.parseColor("#1C1C19") else android.graphics.Color.WHITE
+            hexPaint.color = textColor
+            canvas.drawText("${pc.name}  ${pc.hexCode}", margin + 40f, textY, hexPaint)
+            y += swatchHeight
+        }
+        canvas.drawText("CAMPALETTE", margin, height - 80f, brandPaint)
+        return bitmap
+    }
+
     private fun imageProxyToBitmap(image: ImageProxy): Bitmap {
         if (image.format == ImageFormat.JPEG || image.planes.size == 1) {
             val buffer = image.planes[0].buffer
             val bytes = ByteArray(buffer.remaining())
             buffer.get(bytes)
-            return BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+            val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
                 ?: throw IllegalStateException("Bitmap decode failed")
+            return rotateBitmap(decoded, image.imageInfo.rotationDegrees)
         }
 
         val yBuffer = image.planes[0].buffer
@@ -362,13 +799,15 @@ object AtelierData {
         val decoded = BitmapFactory.decodeByteArray(out.toByteArray(), 0, out.size())
             ?: throw IllegalStateException("Bitmap decode failed")
 
-        return if (image.imageInfo.rotationDegrees != 0) {
-            val matrix = Matrix()
-            matrix.postRotate(image.imageInfo.rotationDegrees.toFloat())
-            Bitmap.createBitmap(decoded, 0, 0, decoded.width, decoded.height, matrix, true)
-        } else {
-            decoded
-        }
+        return rotateBitmap(decoded, image.imageInfo.rotationDegrees)
+    }
+
+    private fun rotateBitmap(bitmap: Bitmap, rotationDegrees: Int): Bitmap {
+        if (rotationDegrees == 0) return bitmap
+        val matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
+        val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+        if (rotated !== bitmap) bitmap.recycle()
+        return rotated
     }
 }
 

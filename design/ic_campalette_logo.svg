@@ -1,8 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="512" height="512">
-  <title>Campalette app icon</title>
-  <desc>A system-blue app icon containing Campalette's white C-lens and three color samples.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <title>Campalette C-lens mark</title>
+  <desc>An open camera lens shaped like a C, with a focus point and three captured color samples.</desc>
 
-  <rect width="108" height="108" rx="23.5" fill="#007AFF" />
   <path
     d="M68.58 37.27 A25 25 0 1 0 68.58 70.73"
     fill="none"

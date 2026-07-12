@@ -3,7 +3,14 @@ package com.vishnu.campalette.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import android.content.Intent
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
@@ -17,10 +24,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,6 +48,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.core.graphics.ColorUtils
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.vishnu.campalette.MainActivity
@@ -47,19 +59,26 @@ import com.vishnu.campalette.PaletteStudy
 import com.vishnu.campalette.RadialMenuState
 import com.vishnu.campalette.R
 import com.vishnu.campalette.ui.components.AppScreen
-import com.vishnu.campalette.ui.components.FloatingBottomNav
+
 import com.vishnu.campalette.ui.HarmonyMode
 import com.vishnu.campalette.ui.screens.ColorDetailScreen
+import com.vishnu.campalette.ui.screens.ColorBlindnessPreviewScreen
 import com.vishnu.campalette.ui.screens.LiveCameraScreen
 import com.vishnu.campalette.ui.screens.OnboardingPermissionScreen
 import com.vishnu.campalette.ui.screens.PaletteEditorScreen
 import com.vishnu.campalette.ui.screens.PaletteLibraryScreen
 import com.vishnu.campalette.ui.screens.SettingsScreen
+import com.vishnu.campalette.ui.screens.ShareExportSheet
 import com.vishnu.campalette.ui.theme.DynamicThemeProvider
+import com.vishnu.campalette.ui.theme.LocalReducedMotion
 import java.util.concurrent.ExecutorService
+import java.io.File
+import java.io.FileOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 
 @Composable
 fun AppShell(
@@ -71,6 +90,7 @@ fun AppShell(
     val clipboardManager = LocalClipboardManager.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val hazeState = rememberHazeState()
     var hasCameraPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
@@ -104,21 +124,82 @@ fun AppShell(
     var paletteSource by rememberSaveable { mutableStateOf("") }
     var selectedEditorHex by rememberSaveable { mutableStateOf<String?>(null) }
     var harmonyMode by rememberSaveable { mutableStateOf(HarmonyMode.Analogous) }
-    var keepReticle by rememberSaveable { mutableStateOf(true) }
     var flashPreferred by rememberSaveable { mutableStateOf(false) }
     var hapticsEnabled by rememberSaveable { mutableStateOf(true) }
+    var paletteTintEnabled by rememberSaveable { mutableStateOf(true) }
+    var librarySearch by rememberSaveable { mutableStateOf("") }
+    var libraryFilter by rememberSaveable { mutableStateOf("all") }
+    var libraryGrid by rememberSaveable { mutableStateOf(false) }
     var lensFacing by rememberSaveable { mutableStateOf(androidx.camera.core.CameraSelector.LENS_FACING_BACK) }
     var gridEnabled by rememberSaveable { mutableStateOf(false) }
     var cameraHasFlash by rememberSaveable { mutableStateOf(false) }
+    var showShareSheet by rememberSaveable { mutableStateOf(false) }
+    var showColorBlindness by rememberSaveable { mutableStateOf(false) }
+    var colorBlindnessType by rememberSaveable { mutableStateOf(AtelierData.ColorBlindnessType.Deuteranopia) }
     val haptics = rememberAtelierHaptics(enabled = hapticsEnabled)
     val hasCapturedPalette = capturedImage != null && colorPalette.isNotEmpty()
-    val dominantSeedColor = colorPalette.firstOrNull()?.color
+    val dominantSeedColor = if (paletteTintEnabled) colorPalette.firstOrNull()?.color else null
+
+    LaunchedEffect(currentScreen, hasCameraPermission, selectedColorDetails) {
+        val useDarkSystemIcons = selectedColorDetails?.let {
+            ColorUtils.calculateLuminance(it.color) > 0.45
+        } ?: (currentScreen != AppScreen.Live || !hasCameraPermission)
+        val systemBarStyle = if (useDarkSystemIcons) {
+            SystemBarStyle.light(android.graphics.Color.TRANSPARENT, android.graphics.Color.TRANSPARENT)
+        } else {
+            SystemBarStyle.dark(android.graphics.Color.TRANSPARENT)
+        }
+        activity.enableEdgeToEdge(
+            statusBarStyle = systemBarStyle,
+            navigationBarStyle = systemBarStyle
+        )
+        @Suppress("DEPRECATION")
+        activity.window.statusBarColor = android.graphics.Color.TRANSPARENT
+        @Suppress("DEPRECATION")
+        activity.window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        val controller = WindowCompat.getInsetsController(activity.window, activity.window.decorView)
+        controller.isAppearanceLightStatusBars = useDarkSystemIcons
+        controller.isAppearanceLightNavigationBars = useDarkSystemIcons
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            activity.window.isStatusBarContrastEnforced = false
+            activity.window.isNavigationBarContrastEnforced = false
+        }
+    }
 
     val workingPalette = remember(colorPalette) { colorPalette }
     val activeEditorColor = workingPalette.firstOrNull { it.hexCode == selectedEditorHex } ?: workingPalette.firstOrNull()
     var savedPalettes by rememberSaveable(stateSaver = paletteStudyListSaver()) { mutableStateOf<List<PaletteStudy>>(emptyList()) }
     var historyPalettes by rememberSaveable(stateSaver = paletteStudyListSaver()) { mutableStateOf<List<PaletteStudy>>(emptyList()) }
     var latestCapturedStudy by rememberSaveable(stateSaver = paletteStudySaver()) { mutableStateOf<PaletteStudy?>(null) }
+    var storageLoaded by remember { mutableStateOf(false) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            scope.launch {
+                runCatching {
+                    withContext(Dispatchers.IO) { decodeBitmap(context, uri) }
+                }.onSuccess { bitmap ->
+                    val displayBitmap = withContext(Dispatchers.Default) { AtelierData.downscaleBitmap(bitmap, 1080) }
+                    val extracted = withContext(Dispatchers.Default) {
+                        AtelierData.extractColorPalette(activity, displayBitmap).withoutDuplicateColors()
+                    }
+                    val importName = activity.getString(R.string.capture_name, AtelierData.timestampLabel())
+                    capturedImage?.recycle()
+                    capturedImage = displayBitmap
+                    colorPalette = extracted
+                    paletteTintEnabled = true
+                    paletteName = importName
+                    paletteSource = "Gallery import"
+                    selectedEditorHex = extracted.firstOrNull()?.hexCode
+                    val study = AtelierData.createCapturedStudy(importName, extracted, paletteSource)
+                    historyPalettes = listOf(study) + historyPalettes
+                    haptics.perform(AtelierHapticEvent.GalleryImport)
+                }.onFailure {
+                    snackbarHostState.showSnackbar(activity.getString(R.string.capture_failed))
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         val prefs = context.getSharedPreferences("campalette", android.content.Context.MODE_PRIVATE)
@@ -126,31 +207,39 @@ fun AppShell(
         val historyJson = prefs.getString("history_json", null)
         if (savedJson != null) savedPalettes = AtelierData.decodeStudyJson(savedJson)
         if (historyJson != null) historyPalettes = AtelierData.decodeStudyJson(historyJson)
+        storageLoaded = true
     }
-    LaunchedEffect(savedPalettes) {
-        if (savedPalettes.isNotEmpty()) {
+    LaunchedEffect(savedPalettes, storageLoaded) {
+        if (storageLoaded) {
             context.getSharedPreferences("campalette", android.content.Context.MODE_PRIVATE)
                 .edit().putString("saved_json", AtelierData.encodeStudyJson(savedPalettes)).apply()
         }
     }
-    LaunchedEffect(historyPalettes) {
-        if (historyPalettes.isNotEmpty()) {
+    LaunchedEffect(historyPalettes, storageLoaded) {
+        if (storageLoaded) {
             context.getSharedPreferences("campalette", android.content.Context.MODE_PRIVATE)
                 .edit().putString("history_json", AtelierData.encodeStudyJson(historyPalettes)).apply()
         }
     }
-    val libraryPalettes = remember(savedPalettes, workingPalette, paletteName, paletteSource) {
-        if (workingPalette.isNotEmpty() && paletteName.isNotBlank()) {
-            val currentStudy = AtelierData.createCapturedStudy(
-                name = paletteName,
-                colors = workingPalette,
-                source = paletteSource.ifBlank { activity.getString(R.string.current_palette_source) }
-            )
-            listOf(currentStudy) + savedPalettes
-        } else {
-            savedPalettes
-        }
+    val libraryPalettes = remember(savedPalettes, historyPalettes, librarySearch, libraryFilter) {
+        val savedNames = savedPalettes.mapTo(mutableSetOf()) { it.name }
+        (savedPalettes + historyPalettes)
+            .distinctBy { "${it.name}|${it.capturedAt}|${it.source}" }
+            .filter { study ->
+                librarySearch.isBlank() || study.name.contains(librarySearch, ignoreCase = true) ||
+                    study.colors.any { it.hexCode.contains(librarySearch, ignoreCase = true) }
+            }
+            .filter { study ->
+                when (libraryFilter) {
+                    "camera" -> study.source.contains("camera", ignoreCase = true) || study.source.contains("capture", ignoreCase = true)
+                    "harmony" -> study.source.contains("harmony", ignoreCase = true)
+                    "saved" -> study.name in savedNames
+                    else -> true
+                }
+            }
     }
+
+    var reducedMotion by remember { mutableStateOf(false) }
 
     val harmonyLabel = remember(harmonyMode) {
         when (harmonyMode) {
@@ -170,7 +259,7 @@ fun AppShell(
             onImageCaptured = { bitmap ->
                 scope.launch(Dispatchers.Default) {
                     val displayBmp = AtelierData.downscaleBitmap(bitmap, 1080)
-                    val extracted = AtelierData.extractColorPalette(activity, displayBmp)
+                    val extracted = AtelierData.extractColorPalette(activity, displayBmp).withoutDuplicateColors()
                     val captureName = activity.getString(R.string.capture_name, AtelierData.timestampLabel())
                     val capturedStudy = AtelierData.createCapturedStudy(
                         name = captureName, colors = extracted, source = activity.getString(R.string.source_live_camera)
@@ -181,6 +270,7 @@ fun AppShell(
                         capturedImage?.recycle()
                         capturedImage = displayBmp
                         colorPalette = extracted
+                        paletteTintEnabled = true
                         paletteName = captureName
                         paletteSource = activity.getString(R.string.source_live_camera)
                         selectedEditorHex = extracted.firstOrNull()?.hexCode
@@ -200,13 +290,6 @@ fun AppShell(
     }
 
     val clearCapture: () -> Unit = {
-        if (colorPalette.isNotEmpty() && paletteName.isNotBlank()) {
-            val study = AtelierData.createCapturedStudy(
-                name = paletteName, colors = colorPalette,
-                source = paletteSource.ifBlank { activity.getString(R.string.current_palette_source) }
-            )
-            historyPalettes = listOf(study) + historyPalettes
-        }
         capturedImage?.recycle()
         capturedImage = null
         colorPalette = emptyList()
@@ -216,48 +299,71 @@ fun AppShell(
         radialMenuState = null
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) }) { padding ->
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+    ) { padding ->
+        CompositionLocalProvider(LocalReducedMotion provides reducedMotion) {
         DynamicThemeProvider(dominantColor = dominantSeedColor) {
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-                if (!hasCameraPermission) {
-                    OnboardingPermissionScreen(
-                        modifier = Modifier.fillMaxSize(),
-                        onRequestPermission = {
-                            haptics.perform(AtelierHapticEvent.PermissionPrompt)
-                            permissionLauncher.launch(Manifest.permission.CAMERA)
-                        }
-                    )
-                } else {
-                    AnimatedContent(
+                AnimatedContent(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .hazeSource(state = hazeState),
                         targetState = currentScreen,
                         transitionSpec = {
-                            (slideInHorizontally(tween(200)) { it / 6 } + fadeIn(tween(180)))
-                                .togetherWith(slideOutHorizontally(tween(200)) { -it / 6 } + fadeOut(tween(150)))
+                            if (reducedMotion) {
+                                fadeIn(tween(0)).togetherWith(fadeOut(tween(0)))
+                            } else if (targetState == AppScreen.Editor || initialState == AppScreen.Editor) {
+                                (slideInHorizontally(tween(220)) { it / 3 } + fadeIn(tween(160)))
+                                    .togetherWith(slideOutHorizontally(tween(200)) { -it / 5 } + fadeOut(tween(130)))
+                            } else {
+                                fadeIn(tween(150)).togetherWith(fadeOut(tween(120)))
+                            }
                         },
                         label = "screenTransition"
                     ) { screen ->
-                        when (screen) {
-                            AppScreen.Live -> LiveCameraScreen(
-                                activity = activity,
-                                modifier = Modifier.fillMaxSize(),
-                                capturedImage = capturedImage,
+                        val liveCameraState = remember(colorPalette, selectedColorDetails, previewSize, hasCapturedPalette, paletteName, paletteSource, harmonyLabel, isCapturing) {
+                            com.vishnu.campalette.ui.screens.LiveCameraState(
                                 palette = colorPalette,
                                 selectedColor = selectedColorDetails ?: colorPalette.firstOrNull(),
+                                previewSize = previewSize,
+                                hasCapturedPalette = hasCapturedPalette,
+                                paletteName = paletteName,
+                                harmonyLabel = harmonyLabel,
+                                isCapturing = isCapturing
+                            )
+                        }
+                        when (screen) {
+                            AppScreen.Live -> if (!hasCameraPermission) {
+                                OnboardingPermissionScreen(
+                                    modifier = Modifier.fillMaxSize(),
+                                    onRequestPermission = {
+                                        haptics.perform(AtelierHapticEvent.PermissionPrompt)
+                                        permissionLauncher.launch(Manifest.permission.CAMERA)
+                                    }
+                                )
+                            } else {
+                                LiveCameraScreen(
+                                state = liveCameraState,
+                                activity = activity,
+                                capturedImage = capturedImage,
                                 radialMenuState = radialMenuState,
-                                keepReticle = keepReticle,
                                 gridEnabled = gridEnabled,
                                 flashEnabled = flashPreferred && cameraHasFlash,
                                 flashAvailable = cameraHasFlash,
                                 lensFacing = lensFacing,
-                                previewSize = previewSize,
-                                hasCapturedPalette = hasCapturedPalette,
-                                paletteName = paletteName,
-                                paletteSource = paletteSource,
-                                harmonyLabel = harmonyLabel,
-                                isCapturing = isCapturing,
+                                largeTouchTargets = false,
+                                onCapture = {
+                                    haptics.perform(AtelierHapticEvent.CapturePress)
+                                    performCapture()
+                                },
                                 onClearCapture = clearCapture,
                                 onMenuClick = { haptics.perform(AtelierHapticEvent.Navigation); currentScreen = AppScreen.History },
-                                onProfileClick = { haptics.perform(AtelierHapticEvent.Navigation); currentScreen = AppScreen.Settings },
+                                onEditPalette = {
+                                    haptics.perform(AtelierHapticEvent.Navigation)
+                                    currentScreen = AppScreen.Editor
+                                },
                                 onPreviewMeasured = { previewSize = it },
                                 onFlipCamera = {
                                     haptics.perform(if (lensFacing == androidx.camera.core.CameraSelector.LENS_FACING_BACK) AtelierHapticEvent.ToggleOn else AtelierHapticEvent.ToggleOff)
@@ -275,8 +381,9 @@ fun AppShell(
                                     val sampledColor = AtelierData.sampleColorFromBitmap(bitmap, offset, size)
                                     if (sampledColor != null) {
                                         haptics.perform(AtelierHapticEvent.Sample)
-                                        val generated = AtelierData.generatePaletteFromSeedColor(activity, sampledColor)
+                                        val generated = AtelierData.generatePaletteFromSeedColor(activity, sampledColor).withoutDuplicateColors()
                                         colorPalette = generated
+                                        paletteTintEnabled = true
                                         paletteSource = activity.getString(R.string.source_sampled_capture, latestCapturedStudy?.name ?: activity.getString(R.string.source_live_camera))
                                         selectedEditorHex = generated.firstOrNull()?.hexCode
                                         radialMenuState = null
@@ -286,96 +393,129 @@ fun AppShell(
                                     val sampledColor = AtelierData.sampleColorFromBitmap(bitmap, offset, size)
                                     if (sampledColor != null) {
                                         haptics.perform(AtelierHapticEvent.SampleExplore)
-                                        val generated = AtelierData.generatePaletteFromSeedColor(activity, sampledColor)
+                                        val generated = AtelierData.generatePaletteFromSeedColor(activity, sampledColor).withoutDuplicateColors()
                                         colorPalette = generated
+                                        paletteTintEnabled = true
                                         paletteSource = activity.getString(R.string.source_sampled_capture, latestCapturedStudy?.name ?: activity.getString(R.string.source_live_camera))
                                         selectedEditorHex = generated.firstOrNull()?.hexCode
                                         radialMenuState = RadialMenuState(center = offset, touchedColor = sampledColor, selectedIndex = AtelierData.nearestPaletteIndex(sampledColor, generated))
                                     }
                                 },
                                 onColorSelected = { haptics.perform(AtelierHapticEvent.Selection); selectedColorDetails = it },
-                                onCameraError = { scope.launch { snackbarHostState.showSnackbar(it) } }
-                            )
-
-                            AppScreen.Library -> {
-                                LaunchedEffect(Unit) { currentScreen = AppScreen.History }
+                                onCameraError = { scope.launch { snackbarHostState.showSnackbar(it) } },
+                                    onImportGallery = { galleryLauncher.launch("image/*") }
+                                )
                             }
+
+
 
                             AppScreen.History -> PaletteLibraryScreen(
                                 modifier = Modifier.fillMaxSize(),
-                                palettes = libraryPalettes,
-                                onOpenCamera = { haptics.perform(AtelierHapticEvent.Navigation); currentScreen = AppScreen.Live },
-                                onOpenBuilder = { haptics.perform(AtelierHapticEvent.Navigation); currentScreen = AppScreen.Editor },
-                                onPaletteSelected = { selected ->
+                                state = com.vishnu.campalette.ui.screens.LibraryState(
+                                    palettes = libraryPalettes,
+                                    searchQuery = librarySearch,
+                                    selectedFilter = libraryFilter,
+                                    selectedSort = "Recent",
+                                    isGridView = libraryGrid,
+                                    favorites = emptySet()
+                                ),
+                                onSearchChange = { librarySearch = it },
+                                onFilterChange = { libraryFilter = it },
+                                onToggleGrid = { libraryGrid = !libraryGrid },
+                                onPaletteSelect = { selected ->
                                     haptics.perform(AtelierHapticEvent.Selection)
-                                    paletteName = selected.name; paletteSource = selected.source; colorPalette = selected.colors
-                                    latestCapturedStudy = selected; selectedEditorHex = selected.colors.firstOrNull()?.hexCode; currentScreen = AppScreen.Editor
+                                    val cleanedColors = selected.colors.withoutDuplicateColors()
+                                    paletteName = selected.name; paletteSource = selected.source; colorPalette = cleanedColors
+                                    paletteTintEnabled = true
+                                    latestCapturedStudy = selected; selectedEditorHex = cleanedColors.firstOrNull()?.hexCode; currentScreen = AppScreen.Editor
+                                },
+                                onDeletePalette = { selected ->
+                                    savedPalettes = savedPalettes.filterNot { it.name == selected.name }
+                                    historyPalettes = historyPalettes.filterNot { it.name == selected.name && it.capturedAt == selected.capturedAt }
+                                },
+                                onNavigate = {
+                                    haptics.perform(AtelierHapticEvent.Navigation)
+                                    currentScreen = it
                                 }
                             )
 
                             AppScreen.Editor -> PaletteEditorScreen(
                                 modifier = Modifier.fillMaxSize(),
-                                paletteName = paletteName,
-                                paletteSource = paletteSource,
-                                palette = workingPalette,
-                                selectedHex = activeEditorColor?.hexCode,
-                                harmonyLabel = harmonyLabel,
-                                onPaletteNameChange = { paletteName = it },
-                                onColorSelected = { haptics.perform(AtelierHapticEvent.Selection); selectedEditorHex = it.hexCode },
-                                onInspectSelected = { haptics.perform(AtelierHapticEvent.Inspect); activeEditorColor?.let { selectedColorDetails = it } },
-                                onAnalyzeHarmony = {
+                                state = com.vishnu.campalette.ui.screens.EditorState(
+                                    name = paletteName,
+                                    source = paletteSource,
+                                    palette = workingPalette,
+                                    harmonyMode = harmonyMode,
+                                    selectedHex = selectedEditorHex
+                                ),
+                                onNameChange = { paletteName = it },
+                                onHarmonyModeChange = { requestedMode ->
                                     activeEditorColor?.let { selected ->
                                         haptics.perform(AtelierHapticEvent.Selection)
-                                        val nextMode = when (harmonyMode) { HarmonyMode.Analogous -> HarmonyMode.Complementary; HarmonyMode.Complementary -> HarmonyMode.Tonal; HarmonyMode.Tonal -> HarmonyMode.Analogous }
-                                        harmonyMode = nextMode
-                                        val harmonized = AtelierData.harmonyPalette(activity, selected.color, nextMode)
+                                        harmonyMode = requestedMode
+                                        val harmonized = AtelierData.harmonyPalette(activity, selected.color, requestedMode).withoutDuplicateColors()
                                         colorPalette = harmonized; paletteSource = activity.getString(R.string.source_harmony_study); selectedEditorHex = harmonized.firstOrNull()?.hexCode
+                                        paletteTintEnabled = true
                                     }
                                 },
-                                onSavePalette = {
+                                onSelectColor = { selectedEditorHex = it.hexCode },
+                                onInspectColor = {
+                                    haptics.perform(AtelierHapticEvent.Inspect)
+                                    selectedColorDetails = it
+                                },
+                                onDeleteColor = { color ->
+                                    val newPalette = workingPalette.filterNot { it.hexCode == color.hexCode }
+                                    if (newPalette.isNotEmpty()) {
+                                        colorPalette = newPalette
+                                        if (selectedEditorHex == color.hexCode) {
+                                            selectedEditorHex = newPalette.first().hexCode
+                                        }
+                                    }
+                                },
+                                onReorder = { from, to ->
+                                    val list = workingPalette.toMutableList()
+                                    val item = list.removeAt(from)
+                                    list.add(to, item)
+                                    colorPalette = list
+                                },
+                                onSave = {
                                     haptics.perform(AtelierHapticEvent.Save)
                                     val study = AtelierData.createCapturedStudy(name = paletteName, colors = workingPalette, source = activity.getString(R.string.builder_palette_source))
                                     savedPalettes = listOf(study) + savedPalettes.filterNot { it.name == study.name }
                                     currentScreen = AppScreen.History
                                 },
-                                onOpenCamera = { haptics.perform(AtelierHapticEvent.Navigation); currentScreen = AppScreen.Live },
-                                onOpenLibrary = { haptics.perform(AtelierHapticEvent.Navigation); currentScreen = AppScreen.History }
+                                onShare = { showShareSheet = true },
+                                onNavigate = {
+                                    haptics.perform(AtelierHapticEvent.Navigation)
+                                    currentScreen = it
+                                }
                             )
 
                             AppScreen.Settings -> SettingsScreen(
                                 modifier = Modifier.fillMaxSize(),
-                                keepReticle = keepReticle, flashPreferred = flashPreferred, flashAvailable = cameraHasFlash,
+                                paletteTintEnabled = paletteTintEnabled,
+                                onPaletteTintChange = { paletteTintEnabled = it },
+                                reducedMotion = reducedMotion,
+                                onReducedMotionChange = { reducedMotion = it },
                                 hapticsEnabled = hapticsEnabled,
-                                onReticleChanged = { haptics.perform(if (keepReticle) AtelierHapticEvent.ToggleOff else AtelierHapticEvent.ToggleOn); keepReticle = it },
-                                onFlashChanged = { if (cameraHasFlash) { haptics.perform(if (it) AtelierHapticEvent.ToggleOn else AtelierHapticEvent.ToggleOff); flashPreferred = it } },
-                                onHapticsChanged = { haptics.perform(if (it) AtelierHapticEvent.ToggleOn else AtelierHapticEvent.ToggleOff, force = true); hapticsEnabled = it }
+                                onHapticsChange = { hapticsEnabled = it }
                             )
                         }
-                    }
                 }
 
-                if (hasCameraPermission && selectedColorDetails == null) {
-                    FloatingBottomNav(
+                if (
+                    currentScreen != AppScreen.Editor &&
+                    selectedColorDetails == null &&
+                    !showShareSheet
+                ) {
+                    com.vishnu.campalette.ui.components.BottomBar(
                         currentScreen = currentScreen,
-                        isCapturing = isCapturing,
-                        isCaptured = capturedImage != null,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(horizontal = 20.dp, vertical = 18.dp)
-                            .fillMaxWidth(0.9f)
-                            .navigationBarsPadding(),
-                        onLiveAction = if (capturedImage != null || currentScreen == AppScreen.Live) {
-                            {
-                                if (capturedImage != null) {
-                                    haptics.perform(AtelierHapticEvent.Navigation)
-                                    clearCapture()
-                                } else {
-                                    haptics.perform(AtelierHapticEvent.CapturePress)
-                                    performCapture()
-                                }
-                            }
-                        } else null,
-                        onScreenSelected = { haptics.perform(AtelierHapticEvent.Navigation); currentScreen = it }
+                        hazeState = hazeState,
+                        modifier = Modifier.align(Alignment.BottomCenter),
+                        onScreenSelected = {
+                            haptics.perform(AtelierHapticEvent.Navigation)
+                            currentScreen = it
+                        }
                     )
                 }
 
@@ -383,19 +523,62 @@ fun AppShell(
                     ColorDetailScreen(
                         modifier = Modifier.fillMaxSize(),
                         paletteColor = paletteColor,
-                        onCopy = { v -> haptics.perform(AtelierHapticEvent.Copy); clipboardManager.setText(AnnotatedString(v)); scope.launch { snackbarHostState.showSnackbar(activity.getString(R.string.copied)) } },
+                        onCopy = { v -> haptics.perform(AtelierHapticEvent.Copy); clipboardManager.setText(androidx.compose.ui.text.AnnotatedString(v)); scope.launch { snackbarHostState.showSnackbar(activity.getString(R.string.copied)) } },
                         onAddToPalette = {
                             haptics.perform(AtelierHapticEvent.AddToPalette)
                             if (workingPalette.none { it.hexCode == paletteColor.hexCode }) colorPalette = (workingPalette + paletteColor).take(8)
                             selectedEditorHex = paletteColor.hexCode; selectedColorDetails = null; currentScreen = AppScreen.Editor
                         },
+                        onRemoveFromPalette = {
+                            haptics.perform(AtelierHapticEvent.Delete)
+                            colorPalette = workingPalette.filterNot { it.hexCode == paletteColor.hexCode }
+                            selectedColorDetails = null
+                        },
+                        onShowColorBlindness = { showColorBlindness = true },
                         onBack = { haptics.perform(AtelierHapticEvent.Navigation); selectedColorDetails = null }
+                    )
+                }
+
+                if (showColorBlindness) {
+                    selectedColorDetails?.let { color ->
+                        ColorBlindnessPreviewScreen(
+                            modifier = Modifier.fillMaxSize(),
+                            paletteColor = color,
+                            initialType = colorBlindnessType,
+                            onTypeChanged = { colorBlindnessType = it },
+                            onClose = { showColorBlindness = false }
+                        )
+                    }
+                }
+
+                if (showShareSheet) {
+                    ShareExportSheet(
+                        modifier = Modifier.fillMaxSize(),
+                        palette = workingPalette,
+                        paletteName = paletteName,
+                        onShareImage = {
+                            haptics.perform(AtelierHapticEvent.Share)
+                            sharePaletteImage(context, workingPalette, paletteName.ifBlank { "Campalette palette" })
+                        },
+                        onCopyAllHex = {
+                            clipboardManager.setText(AnnotatedString(workingPalette.joinToString("\n") { it.hexCode }))
+                            scope.launch { snackbarHostState.showSnackbar(activity.getString(R.string.copied)) }
+                        },
+                        onExportCss = { copyExport(clipboardManager, AtelierData.exportCss(workingPalette), scope, snackbarHostState, activity) },
+                        onExportSwift = { copyExport(clipboardManager, AtelierData.exportSwift(workingPalette), scope, snackbarHostState, activity) },
+                        onExportAndroid = { copyExport(clipboardManager, AtelierData.exportAndroidRes(workingPalette), scope, snackbarHostState, activity) },
+                        onExportFigma = { copyExport(clipboardManager, AtelierData.exportFigma(workingPalette), scope, snackbarHostState, activity) },
+                        onClose = { showShareSheet = false }
                     )
                 }
             }
         }
+        }
     }
 }
+
+private fun List<PaletteColor>.withoutDuplicateColors(): List<PaletteColor> =
+    distinctBy { it.color }.take(8)
 
 private fun paletteColorSaver(): Saver<PaletteColor?, Any> = Saver(
     save = { color -> color?.let { listOf(it.name, it.color, it.hexCode, it.red, it.green, it.blue) } },
@@ -441,3 +624,45 @@ private fun paletteStudySaver(): Saver<PaletteStudy?, Any> = Saver(
         PaletteStudy(name = n, colors = c, note = nt, capturedAt = ca, source = s)
     }
 )
+
+private fun decodeBitmap(context: android.content.Context, uri: Uri): Bitmap {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        ImageDecoder.decodeBitmap(ImageDecoder.createSource(context.contentResolver, uri))
+            .copy(Bitmap.Config.ARGB_8888, false)
+    } else {
+        context.contentResolver.openInputStream(uri).use { input ->
+            BitmapFactory.decodeStream(input) ?: error("Unable to decode selected image")
+        }
+    }
+}
+
+private fun sharePaletteImage(
+    context: android.content.Context,
+    palette: List<PaletteColor>,
+    title: String
+) {
+    if (palette.isEmpty()) return
+    val bitmap = AtelierData.generateShareBitmap(palette, title)
+    val directory = File(context.cacheDir, "shared_images").apply { mkdirs() }
+    val file = File(directory, "campalette-${System.currentTimeMillis()}.png")
+    FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+    bitmap.recycle()
+    val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = "image/png"
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    context.startActivity(Intent.createChooser(intent, "Share palette"))
+}
+
+private fun copyExport(
+    clipboardManager: androidx.compose.ui.platform.ClipboardManager,
+    value: String,
+    scope: kotlinx.coroutines.CoroutineScope,
+    snackbarHostState: SnackbarHostState,
+    activity: MainActivity
+) {
+    clipboardManager.setText(AnnotatedString(value))
+    scope.launch { snackbarHostState.showSnackbar(activity.getString(R.string.copied)) }
+}

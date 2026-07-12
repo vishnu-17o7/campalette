@@ -23,7 +23,22 @@ enum class AtelierHapticEvent {
     Sample,
     SampleExplore,
     AddToPalette,
-    Save
+    Save,
+    Delete,
+    Duplicate,
+    Reorder,
+    Share,
+    Export,
+    Swipe,
+    LongPressMenu,
+    GalleryImport,
+    ColorBlindnessPreview,
+    ResetTheme,
+    OnboardingNext,
+    OnboardingFinish,
+    Search,
+    Filter,
+    Favorite
 }
 
 class AtelierHaptics(
@@ -64,6 +79,36 @@ class AtelierHaptics(
                 Waveform(longArrayOf(0, 12, 18, 16), intArrayOf(0, 80, 0, 150))
             AtelierHapticEvent.Save ->
                 Waveform(longArrayOf(0, 10, 14, 12, 16, 20), intArrayOf(0, 68, 0, 108, 0, 188))
+            AtelierHapticEvent.Delete ->
+                Waveform(longArrayOf(0, 14, 18, 10), intArrayOf(0, 120, 0, 52))
+            AtelierHapticEvent.Duplicate ->
+                Waveform(longArrayOf(0, 10, 12, 10, 12, 14), intArrayOf(0, 64, 0, 88, 0, 64))
+            AtelierHapticEvent.Reorder ->
+                Waveform(longArrayOf(0, 8, 10, 8), intArrayOf(0, 48, 0, 72))
+            AtelierHapticEvent.Share ->
+                Waveform(longArrayOf(0, 12, 16, 14, 18, 22), intArrayOf(0, 80, 0, 120, 0, 188))
+            AtelierHapticEvent.Export ->
+                Waveform(longArrayOf(0, 10, 14, 12, 16, 18), intArrayOf(0, 68, 0, 108, 0, 150))
+            AtelierHapticEvent.Swipe ->
+                Waveform(longArrayOf(0, 8, 12, 8), intArrayOf(0, 42, 0, 68))
+            AtelierHapticEvent.LongPressMenu ->
+                Waveform(longArrayOf(0, 16, 20, 14, 18, 12), intArrayOf(0, 92, 0, 132, 0, 88))
+            AtelierHapticEvent.GalleryImport ->
+                Waveform(longArrayOf(0, 12, 18, 14), intArrayOf(0, 72, 0, 112))
+            AtelierHapticEvent.ColorBlindnessPreview ->
+                Waveform(longArrayOf(0, 10, 14, 10), intArrayOf(0, 56, 0, 92))
+            AtelierHapticEvent.ResetTheme ->
+                Waveform(longArrayOf(0, 14, 18, 12), intArrayOf(0, 88, 0, 64))
+            AtelierHapticEvent.OnboardingNext ->
+                Waveform(longArrayOf(0, 8, 12, 8), intArrayOf(0, 48, 0, 72))
+            AtelierHapticEvent.OnboardingFinish ->
+                Waveform(longArrayOf(0, 14, 22, 18, 28, 28), intArrayOf(0, 96, 0, 142, 0, 208))
+            AtelierHapticEvent.Search ->
+                Waveform(longArrayOf(0, 6, 10, 6), intArrayOf(0, 36, 0, 56))
+            AtelierHapticEvent.Filter ->
+                Waveform(longArrayOf(0, 8, 12, 8), intArrayOf(0, 42, 0, 68))
+            AtelierHapticEvent.Favorite ->
+                Waveform(longArrayOf(0, 12, 16, 12, 14, 18), intArrayOf(0, 72, 0, 108, 0, 150))
         }
 
         vibrate(vibrator, pattern)

@@ -1,179 +1,334 @@
 package com.vishnu.campalette.ui.components
 
+import android.graphics.Bitmap
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.platform.LocalDensity
-import kotlin.math.sin
-import com.vishnu.campalette.ui.theme.ExpressiveSpatialSpring
-import com.vishnu.campalette.ui.theme.ExpressiveEffectsSpring
-import com.vishnu.campalette.ui.theme.ExpressiveEffectsColorSpring
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import kotlinx.coroutines.launch
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.CameraAlt
-import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material.icons.rounded.PhotoLibrary
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.IconButton
+
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.editableText
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.vishnu.campalette.PaletteColor
-import com.vishnu.campalette.R
-import com.vishnu.campalette.ui.theme.AtelierPrimary
-import com.vishnu.campalette.ui.theme.AtelierPrimaryContainer
-import com.vishnu.campalette.ui.theme.AtelierRoundedExtra
-import com.vishnu.campalette.ui.theme.AtelierRoundedLarge
-import com.vishnu.campalette.ui.theme.AtelierTheme
-import com.vishnu.campalette.ui.theme.LocalDynamicThemeColors
 
-enum class AppScreen(
-    @StringRes val labelRes: Int,
-    @StringRes val actionRes: Int
-) {
-    Live(R.string.live_view, R.string.bottom_nav_live),
-    Library(R.string.library, R.string.bottom_nav_library),
-    History(R.string.history, R.string.bottom_nav_history),
-    Editor(R.string.editor, R.string.bottom_nav_builder),
-    Settings(R.string.settings, R.string.bottom_nav_settings)
+import com.vishnu.campalette.PaletteColor
+import com.vishnu.campalette.ui.theme.AtelierTheme
+import com.vishnu.campalette.ui.theme.ExpressiveEffectsColorSpring
+import com.vishnu.campalette.ui.theme.ExpressiveEffectsSpring
+import com.vishnu.campalette.ui.theme.ExpressiveSpatialSpring
+import com.vishnu.campalette.ui.theme.LocalDynamicThemeColors
+import com.vishnu.campalette.ui.theme.LocalReducedMotion
+import kotlinx.coroutines.delay
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
+
+/**
+ * App Screens
+ */
+enum class AppScreen {
+    Live, History, Editor, Settings
+}
+
+/**
+ * Shared Utilities
+ */
+
+fun Modifier.swipeToDismiss(
+    onDismiss: () -> Unit,
+    enabled: Boolean = true,
+    dismissThreshold: Float = 0.4f
+): Modifier = composed {
+    if (!enabled) return@composed this
+
+    val haptic = LocalHapticFeedback.current
+    var componentWidth by remember { mutableStateOf(0f) }
+
+    val offsetX = remember { androidx.compose.animation.core.Animatable(0f) }
+    val scope = rememberCoroutineScope()
+
+    this
+        .onGloballyPositioned { componentWidth = it.size.width.toFloat() }
+        .pointerInput(Unit) {
+            detectHorizontalDragGestures(
+                onDragEnd = {
+                    val threshold = componentWidth * dismissThreshold
+                    if (kotlin.math.abs(offsetX.value) > threshold) {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        scope.launch {
+                            offsetX.animateTo(
+                                targetValue = if (offsetX.value > 0) componentWidth else -componentWidth,
+                                animationSpec = androidx.compose.animation.core.tween(200)
+                            )
+                            onDismiss()
+                        }
+                    } else {
+                        scope.launch {
+                            offsetX.animateTo(
+                                targetValue = 0f,
+                                animationSpec = androidx.compose.animation.core.spring(
+                                    dampingRatio = 0.8f,
+                                    stiffness = 400f
+                                )
+                            )
+                        }
+                    }
+                },
+                onDragCancel = {
+                    scope.launch {
+                        offsetX.animateTo(0f)
+                    }
+                },
+                onHorizontalDrag = { change: androidx.compose.ui.input.pointer.PointerInputChange, dragAmount: Float ->
+                    change.consume()
+                    scope.launch {
+                        offsetX.snapTo(offsetX.value + dragAmount)
+                    }
+                }
+            )
+        }
+        .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+        .alpha(1f - (kotlin.math.abs(offsetX.value) / (componentWidth.takeIf { it > 0 } ?: 1f)).coerceIn(0f, 1f))
 }
 
 @Composable
-fun AtelierLabelTag(
+fun AdaptiveLayout(
+    modifier: Modifier = Modifier,
+    content: @Composable (isTablet: Boolean) -> Unit
+) {
+    val configuration = LocalConfiguration.current
+    val isTablet = configuration.screenWidthDp >= 600
+    Box(modifier = modifier) {
+        content(isTablet)
+    }
+}
+
+/**
+ * Typography & Labels
+ */
+
+@Composable
+fun AtelierTag(
     text: String,
-    color: Color = MaterialTheme.colorScheme.outline
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.onSurfaceVariant
 ) {
     Text(
-        text = text.uppercase(),
+        text = text,
         style = MaterialTheme.typography.labelSmall,
         color = color,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis
+        modifier = modifier
     )
 }
 
 @Composable
-fun GlassPanel(
+fun ValueLabel(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+/**
+ * Cards & Containers
+ */
+
+@Composable
+fun SurfaceCard(
     modifier: Modifier = Modifier,
-    background: Color = MaterialTheme.colorScheme.surfaceTint.copy(alpha = 0.12f),
-    contentPadding: PaddingValues = PaddingValues(24.dp),
+    padding: PaddingValues = PaddingValues(16.dp),
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(AtelierRoundedLarge))
-            .background(background)
-            .padding(contentPadding),
-        content = content
-    )
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = AtelierTheme.colors.surfaceContainerLowest.copy(alpha = 0.92f),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(padding),
+            content = content
+        )
+    }
 }
 
-@Composable
-fun GradientPrimaryButton(
-    text: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    val dynamicColors = LocalDynamicThemeColors.current
-    val primary = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryShift else AtelierPrimary
-    val container = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryContainerShift else AtelierPrimaryContainer
+/**
+ * Buttons & Inputs
+ */
 
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
+@Composable
+fun PrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    icon: (@Composable () -> Unit)? = null
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val reducedMotion = LocalReducedMotion.current
+
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.94f else 1f,
-        animationSpec = ExpressiveSpatialSpring,
-        label = "ctaScale"
+        targetValue = if (isPressed && enabled) 0.98f else 1f,
+        animationSpec = if (reducedMotion) spring() else ExpressiveSpatialSpring,
+        label = "ButtonScale"
     )
-    val gradientTint by animateFloatAsState(
-        targetValue = if (pressed) 0.15f else 0f,
-        animationSpec = tween(durationMillis = 120),
-        label = "ctaTint"
-    )
-    Box(
+
+    val dynamicPrimary = LocalDynamicThemeColors.current.primaryShift
+    val alpha = if (enabled) 1f else 0.5f
+
+    Row(
         modifier = modifier
-            .scale(scale)
-            .clip(RoundedCornerShape(AtelierRoundedLarge))
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(container, primary),
-                    start = Offset.Zero,
-                    end = Offset(520f, 140f)
-                )
-            )
-            .background(Color.White.copy(alpha = gradientTint), RoundedCornerShape(AtelierRoundedLarge))
-            .semantics {
-                role = Role.Button
-                contentDescription = text
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                this.alpha = alpha
             }
-            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
-            .padding(horizontal = 26.dp, vertical = 18.dp),
-        contentAlignment = Alignment.Center
+            .clip(RoundedCornerShape(14.dp))
+            .background(dynamicPrimary)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.foundation.LocalIndication.current,
+                enabled = enabled,
+                onClick = onClick,
+                role = Role.Button
+            )
+            .heightIn(min = 50.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        if (icon != null) {
+            icon()
+            Spacer(modifier = Modifier.width(8.dp))
+        }
         Text(
-            text = text.uppercase(),
+            text = text,
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.onPrimary
         )
@@ -181,243 +336,407 @@ fun GradientPrimaryButton(
 }
 
 @Composable
-fun SoftActionButton(
+fun SecondaryButton(
     text: String,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    icon: (@Composable () -> Unit)? = null
 ) {
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val reducedMotion = LocalReducedMotion.current
+
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.94f else 1f,
-        animationSpec = ExpressiveSpatialSpring,
-        label = "softButtonScale"
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = if (reducedMotion) spring() else ExpressiveSpatialSpring,
+        label = "ButtonScale"
     )
+
+    Row(
+        modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(RoundedCornerShape(14.dp))
+            .background(AtelierTheme.colors.surfaceContainer.copy(alpha = 0.86f))
+            .clickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.foundation.LocalIndication.current,
+                onClick = onClick,
+                role = Role.Button
+            )
+            .heightIn(min = 50.dp)
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (icon != null) {
+            icon()
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+fun AtelierTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    placeholder: String = ""
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (label.isNotBlank()) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = label }
+                .background(
+                    AtelierTheme.colors.surfaceContainer.copy(alpha = 0.82f),
+                    RoundedCornerShape(14.dp)
+                )
+                .heightIn(min = 52.dp)
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            decorationBox = { innerTextField ->
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.78f)
+                    )
+                }
+                innerTextField()
+            }
+        )
+    }
+}
+
+@Composable
+fun AppleSearchField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(44.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(AtelierTheme.colors.surfaceContainerHigh.copy(alpha = 0.72f))
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Search,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+            modifier = Modifier
+                .weight(1f)
+                .semantics { contentDescription = placeholder },
+            decorationBox = { inner ->
+                if (value.isBlank()) {
+                    Text(
+                        text = placeholder,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f)
+                    )
+                }
+                inner()
+            }
+        )
+        if (value.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .clickable { onValueChange("") },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Close,
+                    contentDescription = "Clear search",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(17.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun SegmentedControl(
+    options: List<Pair<String, String>>,
+    selectedKey: String,
+    onSelected: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(40.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(AtelierTheme.colors.surfaceContainerHighest.copy(alpha = 0.52f))
+            .padding(2.dp)
+            .selectableGroup(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        options.forEach { (key, label) ->
+            val selected = key == selectedKey
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight()
+                    .then(
+                        if (selected) {
+                            Modifier
+                                .shadow(1.dp, RoundedCornerShape(8.dp), clip = false)
+                                .background(AtelierTheme.colors.surfaceContainerLowest, RoundedCornerShape(8.dp))
+                        } else Modifier
+                    )
+                    .selectable(
+                        selected = selected,
+                        onClick = { onSelected(key) },
+                        role = Role.Tab
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AtelierToggle(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val trackColor by animateColorAsState(
+        targetValue = if (checked) Color(0xFF34C759) else AtelierTheme.colors.surfaceContainerHighest,
+        animationSpec = ExpressiveEffectsColorSpring, label = "Track"
+    )
+    val thumbOffset by animateDpAsState(
+        targetValue = if (checked) 22.dp else 2.dp,
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f), label = "Thumb"
+    )
+    val thumbColor by animateColorAsState(
+        targetValue = if (checked) Color.White else Color.White,
+        animationSpec = ExpressiveEffectsColorSpring, label = "ThumbColor"
+    )
+
     Box(
         modifier = modifier
-            .scale(scale)
-            .clip(RoundedCornerShape(AtelierRoundedLarge))
-            .background(AtelierTheme.colors.surfaceContainerLow)
+            .size(width = 51.dp, height = 31.dp)
             .semantics {
-                role = Role.Button
-                contentDescription = text
+                role = Role.Switch
+                stateDescription = if (checked) "On" else "Off"
             }
-            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 14.dp),
+            .clip(RoundedCornerShape(999.dp))
+            .background(trackColor)
+            .clickable { onCheckedChange(!checked) }
+    ) {
+        Box(
+            modifier = Modifier
+                .offset(x = thumbOffset, y = 2.dp)
+                .size(27.dp)
+                .clip(CircleShape)
+                .background(thumbColor)
+        )
+    }
+}
+
+@Composable
+fun FilterChip(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dynamicPrimary = LocalDynamicThemeColors.current.primaryShift
+    val bgColor by animateColorAsState(
+        targetValue = if (selected) dynamicPrimary else AtelierTheme.colors.surfaceContainerHigh,
+        animationSpec = ExpressiveEffectsColorSpring, label = "bg"
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = ExpressiveEffectsColorSpring, label = "text"
+    )
+
+    Box(
+        modifier = modifier
+            .heightIn(min = 48.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(bgColor)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary
+            style = MaterialTheme.typography.labelMedium,
+            color = textColor
         )
     }
 }
 
-@Composable
-fun EditorialInputField(
-    value: String,
-    label: String,
-    modifier: Modifier = Modifier,
-    placeholder: String = "",
-    onValueChange: (String) -> Unit
-) {
-    val hasContent = value.isNotBlank()
-    val underlineHeight by animateDpAsState(
-        targetValue = if (hasContent) 2.5.dp else 1.5.dp,
-        animationSpec = tween(durationMillis = 180),
-        label = "underlineHeight"
-    )
-    val underlineAlpha by animateFloatAsState(
-        targetValue = if (hasContent) 0.9f else 0.45f,
-        animationSpec = tween(durationMillis = 180),
-        label = "underlineAlpha"
-    )
-    BasicTextField(
-        value = value,
-        onValueChange = onValueChange,
-        textStyle = MaterialTheme.typography.headlineMedium.copy(
-            color = MaterialTheme.colorScheme.primary,
-            fontStyle = FontStyle.Italic
-        ),
-        modifier = modifier.semantics {
-            contentDescription = label
-            editableText = AnnotatedString(value)
-        },
-        decorationBox = { innerTextField ->
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                AtelierLabelTag(text = label, color = MaterialTheme.colorScheme.outline)
-                Box {
-                    if (value.isBlank() && placeholder.isNotBlank()) {
-                        Text(
-                            text = placeholder,
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.38f),
-                                fontStyle = FontStyle.Italic
-                            )
-                        )
-                    }
-                    innerTextField()
-                }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(underlineHeight)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = underlineAlpha))
-                )
-            }
-        }
-    )
-}
+/**
+ * Color Swatches & Palettes
+ */
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AtelierSwatch(
+fun ColorSwatch(
     color: Color,
-    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    selected: Boolean = false,
-    labelColor: Color = MaterialTheme.colorScheme.onSurface,
     size: Dp = 56.dp,
-    onClick: (() -> Unit)? = null
+    label: String? = null,
+    onLongClick: (() -> Unit)? = null,
+    entryDelay: Int = 0
 ) {
-    val stateLabel = if (selected) {
-        stringResource(R.string.selected_state)
-    } else {
-        stringResource(R.string.not_selected_state)
+    val reducedMotion = LocalReducedMotion.current
+    var appeared by remember { mutableStateOf(reducedMotion) }
+
+    LaunchedEffect(Unit) {
+        if (!reducedMotion) {
+            delay(entryDelay.toLong())
+            appeared = true
+        }
     }
-    val description = stringResource(R.string.swatch_state, label)
 
     val scale by animateFloatAsState(
-        targetValue = if (selected) 1.15f else 1f,
-        animationSpec = spring(dampingRatio = 0.7f, stiffness = 400f),
-        label = "swatchScale"
+        targetValue = if (appeared) {
+            if (selected) 1.15f else 1f
+        } else 0f,
+        animationSpec = if (reducedMotion) spring() else ExpressiveSpatialSpring,
+        label = "SwatchScale"
     )
 
-    val ringWidth by animateFloatAsState(
-        targetValue = if (selected) 1f else 0f,
-        animationSpec = ExpressiveEffectsSpring,
-        label = "swatchRingWidth"
+    val alpha by animateFloatAsState(
+        targetValue = if (appeared) 1f else 0f,
+        animationSpec = if (reducedMotion) spring() else ExpressiveEffectsSpring,
+        label = "SwatchAlpha"
     )
 
-    val borderColor = AtelierTheme.colors.primaryFixed
+    val ringWidth by animateDpAsState(
+        targetValue = if (selected) 3.dp else 0.dp,
+        animationSpec = spring(dampingRatio = 0.8f, stiffness = 300f),
+        label = "Ring"
+    )
+
+    val dynamicPrimary = LocalDynamicThemeColors.current.primaryShift
 
     Column(
-        modifier = modifier.widthIn(min = 56.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        modifier = modifier.width(size + 12.dp)
     ) {
         Box(
             modifier = Modifier
-                .size((size + 10.dp) * scale)
-                .clip(CircleShape)
-                .background(
-                    if (selected) borderColor.copy(alpha = 0.7f * scale)
-                    else Color.Transparent
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(size * scale)
-                    .clip(CircleShape)
-                    .background(color)
-                    .drawWithContent {
-                        drawContent()
+                .size(size)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    this.alpha = alpha
+                }
+                .drawBehind {
+                    if (ringWidth > 0.dp) {
                         drawCircle(
-                            brush = Brush.radialGradient(
-                                colors = listOf(Color.Black.copy(alpha = 0.02f), Color.Black.copy(alpha = 0.1f)),
-                                center = center,
-                                radius = this.size.minDimension / 1.6f
-                            )
+                            color = dynamicPrimary,
+                            radius = (size.toPx() / 2f) + 6.dp.toPx(),
+                            style = Stroke(width = ringWidth.toPx())
                         )
                     }
-                    .then(
-                        if (selected) Modifier.drawBehind {
-                            drawCircle(
-                                color = borderColor,
-                                radius = this.size.minDimension / 2f + 2.dp.toPx(),
-                                style = Stroke(width = (2.5f * ringWidth).dp.toPx())
-                            )
-                        } else Modifier
-                    )
-                    .semantics {
-                        this.selected = selected
-                        role = Role.Button
-                        contentDescription = description
-                        stateDescription = stateLabel
-                    }
-                    .let { base -> if (onClick != null) base.clickable(onClick = onClick) else base }
+                }
+                .clip(RoundedCornerShape(14.dp))
+                .background(color)
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick
+                )
+        )
+        if (label != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.alpha(alpha)
             )
         }
-        Text(
-            text = label,
-            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 12.sp),
-            color = labelColor,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
     }
 }
 
 @Composable
-fun PaletteStrip(
+fun PaletteRow(
     palette: List<PaletteColor>,
-    selectedHex: String?,
+    selectedColor: PaletteColor?,
     onColorSelected: (PaletteColor) -> Unit,
     modifier: Modifier = Modifier,
-    labelColor: Color = MaterialTheme.colorScheme.onSurface,
-    trailingAdd: (() -> Unit)? = null
+    onAddClick: (() -> Unit)? = null
 ) {
-    val captureLabel = stringResource(R.string.capture_button)
-    LazyRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-        items(palette) { paletteColor ->
-            AtelierSwatch(
-                color = Color(paletteColor.color),
-                label = paletteColor.hexCode,
-                selected = paletteColor.hexCode == selectedHex,
-                labelColor = labelColor,
-                onClick = { onColorSelected(paletteColor) }
+    LazyRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = 24.dp)
+    ) {
+        itemsIndexed(palette) { index, pc ->
+            ColorSwatch(
+                color = Color(pc.color),
+                selected = selectedColor == pc,
+                onClick = { onColorSelected(pc) },
+                label = pc.hexCode,
+                entryDelay = index * 60
             )
         }
-        if (trailingAdd != null) {
+        if (onAddClick != null) {
             item {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
+                        .background(AtelierTheme.colors.surfaceContainerHighest)
+                        .clickable(onClick = onAddClick),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Canvas(
-                        modifier = Modifier
-                            .size(56.dp)
-                            .semantics {
-                                role = Role.Button
-                                contentDescription = captureLabel
-                            }
-                            .clickable(onClick = trailingAdd)
-                    ) {
-                        drawCircle(
-                            color = labelColor.copy(alpha = 0.3f),
-                            style = Stroke(
-                                width = 1.5.dp.toPx(),
-                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
-                            )
-                        )
-                        drawLine(
-                            color = labelColor.copy(alpha = 0.45f),
-                            start = Offset(size.width / 2f, size.height * 0.3f),
-                            end = Offset(size.width / 2f, size.height * 0.7f),
-                            strokeWidth = 2.dp.toPx()
-                        )
-                        drawLine(
-                            color = labelColor.copy(alpha = 0.45f),
-                            start = Offset(size.width * 0.3f, size.height / 2f),
-                            end = Offset(size.width * 0.7f, size.height / 2f),
-                            strokeWidth = 2.dp.toPx()
-                        )
-                    }
-                    Text(
-                        text = stringResource(R.string.capture_color_label).uppercase(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = labelColor.copy(alpha = 0.75f)
+                    Icon(
+                        imageVector = Icons.Rounded.Add,
+                        contentDescription = "Add Color",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -426,409 +745,351 @@ fun PaletteStrip(
 }
 
 @Composable
-fun FloatingBottomNav(
+fun PaletteListCard(
+    title: String,
+    swatches: List<PaletteColor>,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    isFavorite: Boolean = false
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = AtelierTheme.colors.surfaceContainerLowest.copy(alpha = 0.94f),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (subtitle != null) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                if (isFavorite) {
+                    Icon(
+                        imageVector = Icons.Rounded.Favorite,
+                        contentDescription = "Favorite",
+                        tint = LocalDynamicThemeColors.current.primaryShift,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(10.dp))
+            ) {
+                swatches.take(6).forEach { pc ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(Color(pc.color))
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Navigation & Progress
+ */
+
+@Composable
+fun BottomBar(
     currentScreen: AppScreen,
     onScreenSelected: (AppScreen) -> Unit,
-    modifier: Modifier = Modifier,
-    isCapturing: Boolean = false,
-    isCaptured: Boolean = false,
-    onLiveAction: (() -> Unit)? = null
-) {
-    val dynamicColors = LocalDynamicThemeColors.current
-    val dynamicPrimary = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryShift else AtelierPrimary
-    val dynamicContainer = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryContainerShift else AtelierPrimaryContainer
-    val items = listOf(
-        Triple(AppScreen.History, Icons.Rounded.History, AppScreen.History.actionRes),
-        Triple(AppScreen.Live, Icons.Rounded.CameraAlt, AppScreen.Live.actionRes),
-        Triple(AppScreen.Settings, Icons.Rounded.Settings, AppScreen.Settings.actionRes)
-    )
-    Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(999.dp))
-            .background(AtelierTheme.colors.surfaceContainerLow.copy(alpha = 0.92f))
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        items.forEach { (screen, icon, actionRes) ->
-            androidx.compose.runtime.key(screen) {
-            val isLiveCaptureAction = screen == AppScreen.Live && currentScreen == AppScreen.Live && onLiveAction != null
-            val action = if (isLiveCaptureAction) {
-                stringResource(R.string.bottom_nav_capture)
-            } else {
-                stringResource(actionRes)
-            }
-            val state = if (!isLiveCaptureAction && currentScreen == screen) {
-                stringResource(R.string.selected_state)
-            } else {
-                stringResource(R.string.not_selected_state)
-            }
-            if (icon == Icons.Rounded.CameraAlt) {
-                val displayIcon = if (isCaptured) Icons.Rounded.Refresh else Icons.Rounded.CameraAlt
-                val interaction = remember { MutableInteractionSource() }
-                val pressed by interaction.collectIsPressedAsState()
-                val scale by animateFloatAsState(
-                    targetValue = if (pressed) 0.94f else 1f,
-                    animationSpec = ExpressiveSpatialSpring,
-                    label = "cameraScale"
-                )
-
-                val shouldPulse = isLiveCaptureAction && !isCapturing && !isCaptured
-                val pulseTransition = rememberInfiniteTransition(label = "cameraBreathe")
-                val pulseScale by pulseTransition.animateFloat(
-                    initialValue = 1f,
-                    targetValue = 1.06f,
-                    animationSpec = infiniteRepeatable(
-                        animation = tween(1800, easing = LinearEasing),
-                        repeatMode = RepeatMode.Reverse
-                    ),
-                    label = "pulseScale"
-                )
-
-                Box(
-                    modifier = Modifier
-                        .scale(if (shouldPulse) scale * pulseScale else scale)
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(dynamicPrimary, dynamicContainer),
-                                start = Offset.Zero,
-                                end = Offset(220f, 120f)
-                            )
-                        )
-                        .semantics {
-                            role = if (isLiveCaptureAction) Role.Button else Role.Tab
-                            if (!isLiveCaptureAction) {
-                                selected = currentScreen == screen
-                                stateDescription = state
-                            }
-                            contentDescription = if (isCapturing) "Capturing" else action
-                        }
-                        .clickable(
-                            interactionSource = interaction,
-                            indication = null,
-                            enabled = !isCapturing
-                        ) {
-                            if (isLiveCaptureAction) {
-                                onLiveAction?.invoke()
-                            } else {
-                                onScreenSelected(screen)
-                            }
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isCapturing && isLiveCaptureAction) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            strokeWidth = 2.5.dp,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    } else {
-                        Icon(displayIcon, contentDescription = action, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(24.dp))
-                    }
-                }
-            } else {
-                val isSelected = currentScreen == screen
-                val interaction = remember { MutableInteractionSource() }
-                val pressed by interaction.collectIsPressedAsState()
-                val targetTint by animateColorAsState(
-                    targetValue = if (isSelected) {
-                        dynamicPrimary
-                    } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
-                    },
-                    animationSpec = ExpressiveEffectsColorSpring,
-                    label = "navIconTint"
-                )
-                val activeIndicatorScale by animateFloatAsState(
-                    targetValue = if (isSelected) 1f else 0f,
-                    animationSpec = ExpressiveSpatialSpring,
-                    label = "indicatorScale"
-                )
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .semantics {
-                            role = Role.Tab
-                            selected = currentScreen == screen
-                            contentDescription = action
-                            stateDescription = state
-                        }
-                        .clickable(interactionSource = interaction, indication = null) { onScreenSelected(screen) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isSelected) {
-                        Box(
-                            modifier = Modifier
-                                .matchParentSize()
-                                .scale(activeIndicatorScale)
-                                .background(dynamicContainer.copy(alpha = 0.22f), shape = CircleShape)
-                        )
-                    }
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = action,
-                        tint = targetTint,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-            } // key(screen)
-        }
-    }
-}
-
-@Composable
-fun PaletteCard(
-    title: String,
-    subtitle: String,
-    swatches: List<PaletteColor>,
-    modifier: Modifier = Modifier,
-    tag: String? = null,
-    featured: Boolean = false,
-    actionIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
-    onActionClick: (() -> Unit)? = null,
-    onClick: (() -> Unit)? = null
-) {
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.94f else 1f,
-        animationSpec = ExpressiveSpatialSpring,
-        label = "paletteCardScale"
-    )
-    val shape = RoundedCornerShape(AtelierRoundedLarge)
-    Column(
-        modifier = modifier
-            .scale(scale)
-            .clip(shape)
-            .background(
-                if (pressed) AtelierTheme.colors.surfaceContainerLow
-                else if (featured) AtelierTheme.colors.surfaceContainerLow
-                else AtelierTheme.colors.surfaceContainerLowest
-            )
-            .semantics {
-                role = Role.Button
-                contentDescription = title
-            }
-            .let { base -> if (onClick != null) base.clickable(interactionSource = interaction, indication = null, onClick = onClick) else base }
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(if (featured) 148.dp else 120.dp)
-        ) {
-            swatches.take(5).forEach { swatch ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(Color(swatch.color))
-                )
-            }
-        }
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 24.dp, top = 20.dp, end = 20.dp, bottom = 24.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                if (!tag.isNullOrBlank()) {
-                    AtelierLabelTag(
-                        text = tag,
-                        color = if (featured) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                    )
-                }
-                Text(
-                    text = title,
-                    style = if (featured) {
-                        MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold)
-                    } else {
-                        MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-                    },
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            if (actionIcon != null && onActionClick != null) {
-                Box(
-                    modifier = Modifier
-                        .padding(start = 12.dp)
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f))
-                        .clickable(onClick = onActionClick),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = actionIcon,
-                        contentDescription = title,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun TechnicalValue(
-    label: String,
-    value: String,
+    hazeState: HazeState,
     modifier: Modifier = Modifier
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        AtelierLabelTag(label, color = MaterialTheme.colorScheme.outline.copy(alpha = 0.9f))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-fun WavyProgressIndicator(
-    modifier: Modifier = Modifier,
-    color: Color = MaterialTheme.colorScheme.primary,
-    strokeWidth: Dp = 4.dp,
-    waveLength: Dp = 24.dp,
-    amplitude: Dp = 6.dp
-) {
-    val infiniteTransition = rememberInfiniteTransition(label = "wavyProgress")
-    val phaseShift by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 2f * Math.PI.toFloat(),
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "phaseShift"
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    val cameraChrome = currentScreen == AppScreen.Live
+    val useDarkGlass = isDark || cameraChrome
+    val glassBase = if (useDarkGlass) Color.Black else Color.White
+    val glassStyle = HazeStyle(
+        blurRadius = 30.dp,
+        backgroundColor = glassBase.copy(alpha = if (useDarkGlass) 0.18f else 0.10f),
+        tints = listOf(HazeTint(glassBase.copy(alpha = if (useDarkGlass) 0.26f else 0.18f)))
     )
-
-    val density = LocalDensity.current
-    Canvas(modifier = modifier) {
-        val width = size.width
-        val height = size.height
-        val midY = height / 2f
-        val pxWaveLength = with(density) { waveLength.toPx() }
-        val pxAmplitude = with(density) { amplitude.toPx() }
-        val pxStrokeWidth = with(density) { strokeWidth.toPx() }
-
-        val path = Path().apply {
-            moveTo(0f, midY)
-            var x = 0f
-            while (x < width) {
-                val relativeX = x / pxWaveLength
-                val y = midY + pxAmplitude * sin(relativeX * 2f * Math.PI.toFloat() - phaseShift)
-                lineTo(x, y)
-                x += 2f
-            }
-            lineTo(width, midY)
-        }
-
-        drawPath(
-            path = path,
-            color = color,
-            style = Stroke(
-                width = pxStrokeWidth,
-                cap = StrokeCap.Round,
-                join = StrokeJoin.Round
-            )
-        )
-    }
-}
-
-@Composable
-fun ExpressiveSplitButton(
-    primaryText: String,
-    secondaryIcon: androidx.compose.ui.graphics.vector.ImageVector,
-    modifier: Modifier = Modifier,
-    onPrimaryClick: () -> Unit,
-    onSecondaryClick: () -> Unit
-) {
-    val dynamicColors = LocalDynamicThemeColors.current
-    val dynamicPrimary = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryShift else AtelierPrimary
-    val dynamicContainer = if (dynamicColors.blendFactor > 0f) dynamicColors.primaryContainerShift else AtelierPrimaryContainer
-
-    val interactionPrimary = remember { MutableInteractionSource() }
-    val pressedPrimary by interactionPrimary.collectIsPressedAsState()
-    val scalePrimary by animateFloatAsState(
-        targetValue = if (pressedPrimary) 0.94f else 1f,
-        animationSpec = ExpressiveSpatialSpring,
-        label = "splitPrimaryScale"
-    )
-
-    val interactionSecondary = remember { MutableInteractionSource() }
-    val pressedSecondary by interactionSecondary.collectIsPressedAsState()
-    val scaleSecondary by animateFloatAsState(
-        targetValue = if (pressedSecondary) 0.94f else 1f,
-        animationSpec = ExpressiveSpatialSpring,
-        label = "splitSecondaryScale"
-    )
-
-    Row(
+    Box(
         modifier = modifier
-            .height(56.dp)
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        val dockShape = RoundedCornerShape(32.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 350.dp)
+                .height(64.dp)
+                .shadow(3.dp, dockShape, clip = false)
+                .clip(dockShape)
+                .hazeEffect(
+                    state = hazeState,
+                    style = glassStyle
+                ) {
+                    noiseFactor = 0.025f
+                }
+                .drawBehind {
+                    drawRoundRect(
+                        brush = Brush.linearGradient(
+                            listOf(
+                                Color.White.copy(alpha = if (useDarkGlass) 0.34f else 0.68f),
+                                Color.White.copy(alpha = 0.10f)
+                            )
+                        ),
+                        cornerRadius = CornerRadius(32.dp.toPx()),
+                        style = Stroke(width = 0.75.dp.toPx())
+                    )
+                }
+                .padding(horizontal = 8.dp)
+                .selectableGroup(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomBarItem(
+                icon = { Icon(Icons.Rounded.PhotoLibrary, null) },
+                label = "Library",
+                selected = currentScreen == AppScreen.History,
+                darkChrome = cameraChrome,
+                onClick = { onScreenSelected(AppScreen.History) },
+                modifier = Modifier.weight(1f)
+            )
+
+            BottomBarItem(
+                icon = { Icon(Icons.Rounded.CameraAlt, null) },
+                label = "Camera",
+                selected = currentScreen == AppScreen.Live,
+                darkChrome = cameraChrome,
+                onClick = { onScreenSelected(AppScreen.Live) },
+                modifier = Modifier.weight(1f)
+            )
+
+            BottomBarItem(
+                icon = { Icon(Icons.Rounded.Settings, null) },
+                label = "Settings",
+                selected = currentScreen == AppScreen.Settings,
+                darkChrome = cameraChrome,
+                onClick = { onScreenSelected(AppScreen.Settings) },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun BottomBarItem(
+    icon: @Composable () -> Unit,
+    label: String,
+    selected: Boolean,
+    darkChrome: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val dynamicPrimary = LocalDynamicThemeColors.current.primaryShift
+    val color by animateColorAsState(
+        targetValue = if (selected) {
+            dynamicPrimary
+        } else if (darkChrome) {
+            Color.White.copy(alpha = 0.82f)
+        } else {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.72f)
+        },
+        animationSpec = ExpressiveEffectsColorSpring, label = "Color"
+    )
+    val selectionColor by animateColorAsState(
+        targetValue = if (selected) dynamicPrimary.copy(alpha = 0.14f) else Color.Transparent,
+        animationSpec = ExpressiveEffectsColorSpring,
+        label = "Selection"
+    )
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+            .selectable(selected = selected, onClick = onClick, role = Role.Tab)
+            .semantics { contentDescription = label }
+            .heightIn(min = 56.dp)
+            .padding(vertical = 3.dp)
     ) {
         Box(
             modifier = Modifier
-                .weight(1f)
-                .scale(scalePrimary)
-                .clip(RoundedCornerShape(topStart = AtelierRoundedLarge, bottomStart = AtelierRoundedLarge, topEnd = 4.dp, bottomEnd = 4.dp))
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(dynamicPrimary, dynamicContainer),
-                        start = Offset.Zero,
-                        end = Offset(240f, 100f)
-                    )
-                )
-                .clickable(interactionSource = interactionPrimary, indication = null, onClick = onPrimaryClick)
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+                .size(width = 46.dp, height = 32.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .background(selectionColor),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                text = primaryText,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onPrimary
+            androidx.compose.runtime.CompositionLocalProvider(
+                androidx.compose.material3.LocalContentColor provides color
+            ) {
+                icon()
+            }
+        }
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = color
+        )
+    }
+}
+
+@Composable
+fun CaptureProgress(modifier: Modifier = Modifier) {
+    val dynamicPrimary = LocalDynamicThemeColors.current.primaryShift
+    val dynamicContainer = LocalDynamicThemeColors.current.primaryContainerShift
+
+    val infiniteTransition = rememberInfiniteTransition(label = "Dots")
+    val angle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "Angle"
+    )
+
+    val scale by infiniteTransition.animateFloat(
+        initialValue = 0.8f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "Scale"
+    )
+
+    Canvas(modifier = modifier.size(64.dp)) {
+        val center = Offset(size.width / 2, size.height / 2)
+        val radius = size.width / 3
+
+        // Draw 3 orbiting dots
+        for (i in 0 until 3) {
+            val offsetAngle = angle + (i * 120f)
+            val rad = offsetAngle * (PI / 180f).toFloat()
+            val x = center.x + radius * cos(rad)
+            val y = center.y + radius * sin(rad)
+
+            drawCircle(
+                color = if (i == 0) dynamicPrimary else dynamicContainer,
+                radius = 6.dp.toPx() * scale,
+                center = Offset(x, y)
             )
         }
+    }
+}
 
-        androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(2.dp))
+@Composable
+fun MagnifierLoupe(
+    bitmap: Bitmap,
+    touchPoint: Offset,
+    containerSize: IntSize,
+    modifier: Modifier = Modifier,
+    hexCode: String = "",
+    tempMode: String = ""
+) {
+    val density = LocalDensity.current
+    val magnifierRadiusDp = 48.dp
+    val magnifierRadiusPx = with(density) { magnifierRadiusDp.toPx() }
+    val zoomFactor = 2f
 
+    val posX = touchPoint.x.coerceIn(
+        magnifierRadiusPx,
+        (containerSize.width - magnifierRadiusPx).coerceAtLeast(magnifierRadiusPx)
+    )
+    val posY = (touchPoint.y - magnifierRadiusPx - with(density) { 32.dp.toPx() }).coerceIn(
+        magnifierRadiusPx,
+        (containerSize.height - magnifierRadiusPx).coerceAtLeast(magnifierRadiusPx)
+    )
+
+    val animatedPosX by animateFloatAsState(targetValue = posX, label = "X")
+    val animatedPosY by animateFloatAsState(targetValue = posY, label = "Y")
+
+    Box(
+        modifier = modifier
+            .offset {
+                IntOffset(
+                    (animatedPosX - magnifierRadiusPx).roundToInt(),
+                    (animatedPosY - magnifierRadiusPx).roundToInt()
+                )
+            }
+    ) {
+        // Shadow and Border
         Box(
             modifier = Modifier
-                .scale(scaleSecondary)
-                .clip(RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp, topEnd = AtelierRoundedLarge, bottomEnd = AtelierRoundedLarge))
-                .background(dynamicPrimary)
-                .clickable(interactionSource = interactionSecondary, indication = null, onClick = onSecondaryClick)
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = secondaryIcon,
-                contentDescription = primaryText,
-                tint = MaterialTheme.colorScheme.onPrimary
-            )
+                .size(magnifierRadiusDp * 2)
+                .shadow(8.dp, CircleShape)
+                .clip(CircleShape)
+                .background(Color.White)
+                .drawBehind {
+                    // Draw magnified bitmap section
+                    val srcRect = android.graphics.Rect(
+                        (touchPoint.x - (magnifierRadiusPx / zoomFactor)).toInt().coerceAtLeast(0),
+                        (touchPoint.y - (magnifierRadiusPx / zoomFactor)).toInt().coerceAtLeast(0),
+                        (touchPoint.x + (magnifierRadiusPx / zoomFactor)).toInt().coerceAtMost(bitmap.width),
+                        (touchPoint.y + (magnifierRadiusPx / zoomFactor)).toInt().coerceAtMost(bitmap.height)
+                    )
+                    val destRect = android.graphics.Rect(0, 0, (magnifierRadiusPx * 2).toInt(), (magnifierRadiusPx * 2).toInt())
+                    drawContext.canvas.nativeCanvas.drawBitmap(bitmap, srcRect, destRect, null)
+
+                    // Draw Crosshair
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.5f),
+                        start = Offset(magnifierRadiusPx, magnifierRadiusPx - 10.dp.toPx()),
+                        end = Offset(magnifierRadiusPx, magnifierRadiusPx + 10.dp.toPx()),
+                        strokeWidth = 3f
+                    )
+                    drawLine(
+                        color = Color.White.copy(alpha = 0.5f),
+                        start = Offset(magnifierRadiusPx - 10.dp.toPx(), magnifierRadiusPx),
+                        end = Offset(magnifierRadiusPx + 10.dp.toPx(), magnifierRadiusPx),
+                        strokeWidth = 3f
+                    )
+                }
+        )
+
+        // Hex Label
+        if (hexCode.isNotEmpty()) {
+            Surface(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .offset(y = 12.dp),
+                shape = RoundedCornerShape(8.dp),
+                color = AtelierTheme.colors.surfaceContainerHighest,
+                shadowElevation = 2.dp
+            ) {
+                Text(
+                    text = hexCode,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
         }
     }
 }

@@ -1,143 +1,141 @@
 # Design
 
-## Visual Identity
+## Direction
 
-Campalette uses a custom "Atelier" theme inspired by artist studios and editorial design. The visual language is warm, tactile, and precise — combining serif typography with a paper-like surface palette and rich, nature-inspired accent colors.
+Campalette uses a native, Apple-inspired interaction model adapted to Android and Jetpack Compose. The interface is quiet, direct, and content-led: the camera and captured colors provide the visual character while navigation and controls stay restrained.
 
-## Color Palette
+The product has three root destinations: Library, Camera, and Settings. Editing is a pushed workflow, not a fourth tab. Color vision and export are modal sheets that preserve context.
 
-**Strategy**: Committed — teal primary carries identity, warm brown secondary provides warmth, deep green tertiary adds depth.
+## Core Principles
 
-### Primary (Teal)
-| Token | Hex | Usage |
-|---|---|---|
-| Primary | `#004743` | Buttons, active states, key actions |
-| On Primary | `#FFFFFF` | Text/icons on primary |
-| Primary Container | `#1F5F5B` | Secondary actions, containers |
-| On Primary Container | `#99D7D1` | Text/icons on container |
-| Primary Fixed | `#B0EEE8` | Swatch selection rings, highlights |
-| Primary Fixed Dim | `#95D2CC` | Subtle highlights |
+- Use one clear hierarchy: large root title, grouped content, then actions.
+- Reserve glass for floating navigation chrome; ordinary content uses opaque grouped surfaces.
+- Keep the camera edge-to-edge and visually dominant.
+- Use system-blue for navigation and primary actions, system-green for enabled switches, and system-red for destructive actions.
+- Prefer sentence case, short labels, and familiar platform patterns.
+- Avoid serif or italic type, decorative gradients, floating tags, pill filters, and card-per-row layouts.
 
-### Secondary (Warm Brown)
-| Token | Hex | Usage |
-|---|---|---|
-| Secondary | `#81542E` | Secondary actions, accents |
-| On Secondary | `#FFFFFF` | Text/icons on secondary |
-| Secondary Container | `#FEC394` | Warm containers, tags |
-| On Secondary Container | `#794E29` | Text on warm containers |
+## Color
 
-### Tertiary (Deep Green)
-| Token | Hex | Usage |
-|---|---|---|
-| Tertiary | `#18481A` | Tertiary actions, nature accent |
-| On Tertiary | `#FFFFFF` | Text/icons on tertiary |
-| Tertiary Container | `#31602F` | Green containers |
-| On Tertiary Container | `#A3D99B` | Text on green containers |
+### Light
 
-### Surface & Background
-| Token | Hex | Usage |
-|---|---|---|
-| Surface | `#FDF9F4` | App background, sheets |
-| Surface Container Lowest | `#FFFFFF` | Elevated cards |
-| Surface Container Low | `#F7F3EE` | Subtle containers |
-| Surface Container | `#F1EDE8` | Default containers |
-| Surface Container High | `#EBE8E3` | Subtle emphasis |
-| Surface Container Highest | `#E6E2DD` | Strong emphasis |
+| Token | Value | Usage |
+|---|---:|---|
+| Background | `#F2F2F7` | Grouped screen background |
+| Group surface | `#FFFFFF` | Inset lists, sheets, editor rows |
+| Secondary fill | `#E5E5EA` | Search, segmented controls, disabled tracks |
+| Label | `#000000` | Primary text |
+| Secondary label | `#5F5F65` | Metadata and supporting copy |
+| Separator | `#C6C6C8` | Inset dividers |
+| Accent | `#007AFF` | Selection, navigation, primary actions |
+| Success | `#34C759` | Enabled switches |
+| Destructive | `#FF3B30` | Remove and destructive actions |
 
-### Neutrals
-| Token | Hex | Usage |
-|---|---|---|
-| On Surface | `#1C1C19` | Primary text |
-| On Surface Variant | `#454D49` | Secondary text |
-| Outline | `#707977` | Borders, dividers |
-| Outline Variant | `#C7CFCD` | Subtle borders |
+### Dark
+
+| Token | Value | Usage |
+|---|---:|---|
+| Background | `#000000` | Root background |
+| Group surface | `#1C1C1E` | Inset groups and sheets |
+| Elevated surface | `#2C2C2E` | Secondary containers |
+| Label | `#F5F5F7` | Primary text |
+| Secondary label | `#B7B7BC` | Metadata |
+| Accent | `#0A84FF` | Dark-mode selection and actions |
+
+Captured palettes may subtly tint selected controls when Palette accent is enabled. The grouped background, body text, destructive color, and switch color remain stable.
 
 ## Typography
 
-**Strategy**: Two-family system with clear role separation.
+Manrope is the only product typeface. Its variable `wght` axis must be set explicitly because the bundled font defaults to ExtraLight.
 
-### Font Families
-- **Newsreader** (Variable): Editorial serif for headlines, display, and emphasis
-- **Manrope** (Variable): Clean sans-serif for body text, labels, and UI
+| Role | Weight | Size / line | Usage |
+|---|---:|---:|---|
+| Large title | 700 | 34 / 40sp | Library and Settings roots |
+| Headline | 700 | 24–28 / 29–34sp | Empty states and detail emphasis |
+| Navigation title | 600 | 16 / 21sp | Pushed editor and sheet headers |
+| Body | 400 | 17 / 24sp | Rows and primary copy |
+| Secondary body | 400 | 15 / 21sp | Metadata and descriptions |
+| Labels | 500–600 | 11–15sp | Tabs, controls, section labels |
 
-### Type Scale
+Use tabular-looking hex values with bold sans-serif styling. Do not use all-caps eyebrow labels, italics, or editorial serif display type.
 
-| Role | Family | Weight | Size | Line Height | Tracking | Usage |
-|---|---|---|---|---|---|---|
-| Display Large | Newsreader | Light | 56sp | 60sp | -1.2sp | Hero numbers, palette names |
-| Headline Large | Newsreader | Regular | 32sp | 36sp | -0.4sp | Screen titles |
-| Headline Medium | Newsreader | Regular | 26sp | 30sp | — | Section headings |
-| Headline Small | Newsreader | Regular | 20sp | 24sp | — | Card titles |
-| Title Large | Newsreader | Regular | 24sp | 28sp | — | Emphasis text |
-| Title Medium | Newsreader | Regular | 20sp | 24sp | — | Subheadings |
-| Body Large | Manrope | Regular | 16sp | 24sp | — | Body text, descriptions |
-| Body Medium | Manrope | Regular | 14sp | 21sp | — | Secondary body text |
-| Label Large | Manrope | SemiBold | 12sp | 16sp | 0.2sp | Buttons, tags |
-| Label Medium | Manrope | SemiBold | 11sp | 14sp | 1.4sp | Eyebrow labels |
-| Label Small | Manrope | Bold | 10sp | 12sp | 1.8sp | Small tags, metadata |
+## Shape and Spacing
 
-## Shapes
+| Element | Radius / size |
+|---|---:|
+| Small controls | 10–12dp |
+| Search and buttons | 12–14dp |
+| Inset groups | 16dp |
+| Sheets | 28dp top corners |
+| Floating dock | 32dp capsule |
+| Dock height | 64dp |
+| Camera shutter | 76dp outer / 60dp inner |
 
-| Token | Radius | Usage |
-|---|---|---|
-| Default | 16dp | Small components, buttons |
-| Medium | 24dp | Medium cards |
-| Large | 32dp | Large cards, panels |
-| Extra | 48dp | Bottom sheet, special containers |
-| Full | 9999dp | Pills, badges, circular |
+Use 16–20dp screen insets, 8–12dp between related controls, and 20–28dp between sections. Separators begin after leading content rather than spanning through icons or swatches.
 
-## Component Patterns
+## Navigation
 
-### GlassPanel
-Frosted glass effect container with surface-tint background at 12% opacity. Used for overlays on camera view.
+### Floating Glass Dock
 
-### GradientPrimaryButton
-Gradient from primary container to primary, with scale animation on press (0.94f). Uppercase label text.
+- Three equal destinations: Library, Camera, Settings.
+- Maximum width 350dp with 16dp side insets.
+- 30dp live blur, subtle noise, a hairline highlight, and no more than 3dp shadow.
+- Camera uses dark translucent glass with white inactive items; grouped screens use light glass with dark items.
+- The selected item receives a compact translucent lens and accent-colored icon/label.
+- The dock is navigation only. Capture is never embedded in it.
+- Hide the dock during Editor, color detail, and export/detail overlays.
 
-### AtelierSwatch
-Circular color swatch with selection ring animation. Shows hex code below. Scale animation on selection (1.15f).
+### Transitions
 
-### PaletteStrip
-Horizontal scrolling row of AtelierSwatches with optional trailing "add" action.
+- Root destinations crossfade in 120–150ms.
+- Editor pushes horizontally with a short fade.
+- Modal tools rise as bottom sheets over a dimmed context.
+- Reduce motion replaces spatial transitions with immediate fades.
 
-### FloatingBottomNav
-Pill-shaped bottom navigation with three items (History, Camera, Settings). Camera button becomes capture action on Live screen with breathing pulse animation.
+## Screen Patterns
 
-### PaletteCard
-Card with swatch strip (5 colors), title, subtitle, and optional action icon. Featured variant has larger swatch area.
+### Camera
 
-### EditorialInputField
-Styled text input with animated underline (1.5dp → 2.5dp), italic serif text, and uppercase label tag.
+- Full-bleed preview under transparent system bars.
+- 44dp visible circular chrome inside 48dp touch targets.
+- A separate 76dp shutter sits above the dock and scales briefly on press.
+- Captured results show one compact review surface with swatches, Retake, and Edit palette.
+- Active palette sampling uses a small translucent strip, never a second navigation bar.
 
-## Animation System
+### Library
 
-### Spring Constants
-- **ExpressiveSpatialSpring**: Damping 0.55, Stiffness 300 — for spatial movements (scale, position)
-- **ExpressiveEffectsSpring**: Damping 1.0, Stiffness 400 — for effects (opacity, color, ring width)
-- **ExpressiveEffectsColorSpring**: Same as above, typed for Color
+- 34sp large title.
+- One native search field and one segmented filter.
+- Palettes live in a single inset group with swatch preview, title, metadata, separator, and disclosure indicator.
+- Empty state directs the user to Camera without adding decorative cards.
 
-### Key Animations
-- **Capture button breathing**: Infinite pulse 1.0 → 1.08 scale, 1800ms linear
-- **Swatch selection**: Scale 1.0 → 1.15 with spring damping 0.7
-- **Button press**: Scale down to 0.92–0.94, quick release
-- **Screen transitions**: Horizontal slide + fade with AnimatedContent
+### Editor
 
-## Dynamic Color System
+- Pushed navigation bar with Back, Share, and Save.
+- Name field, one harmony segmented control, compact palette statistics, and one inset swatch group.
+- Tapping a swatch selects the harmony seed; the selected row uses a checkmark and subtle accent fill.
+- Inspecting a color opens detail. Long press supports reordering; removal remains destructive.
 
-When a photo is captured, the dominant color is extracted and blended into the theme:
-- Primary shifts toward captured color (22% blend factor)
-- Primary container follows with reduced blend (18.7%)
-- Surface tint subtly shifts (6.6%)
-- Surface container low gets a hint (0.88%)
+### Settings
 
-Blend factor is adjusted based on seed color luminance:
-- Dark seeds: 75% of base factor
-- Light seeds: 60% of base factor
+- Inset grouped rows with 51 × 31dp switches.
+- Explanatory copy sits as a footnote beneath the group instead of inflating every row.
+- No one-card-per-setting treatment.
 
-## Layout Principles
+### Detail and Sheets
 
-- **Camera-first**: Live screen is full-bleed camera with overlaid controls
-- **Generous padding**: 24dp standard content padding
-- **Rhythmic spacing**: 10dp, 14dp, 16dp, 20dp, 24dp spacing scale
-- **Full-width cards**: Palette cards and panels span container width
-- **Scrolling palettes**: Horizontal LazyRow for swatch strips
+- Color detail uses a 232dp color hero, 34sp bold hex value, grouped copy rows, sentence-case Tints/Shades, and a red remove action.
+- Color vision and export are bottom sheets with a scrim, 28dp top corners, drag handle, centered title, and blue Done action.
+- Export formats and actions use grouped rows with inset separators.
+
+## Logo
+
+The Campalette mark is a C-shaped camera lens with a white focus point and three small captured-color samples. The primary treatment is system-blue and white with yellow, red, and green optical details. It contains no text, remains inside the adaptive-icon safe zone, and has a monochrome themed-icon variant.
+
+## Accessibility
+
+- Interactive targets are at least 44–48dp.
+- Dock and segmented controls expose selected state and tab/radio semantics.
+- Icons that duplicate a parent label are decorative; action icons have explicit descriptions.
+- Text and controls must retain contrast over arbitrary camera scenes.
+- Destructive actions use both label and color, never color alone.

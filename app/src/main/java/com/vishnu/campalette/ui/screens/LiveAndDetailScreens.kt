@@ -1,860 +1,719 @@
 package com.vishnu.campalette.ui.screens
 
-import android.util.Log
-import androidx.camera.core.Camera
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
+import android.graphics.Bitmap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.CameraAlt
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.FlashOff
 import androidx.compose.material.icons.rounded.FlashOn
 import androidx.compose.material.icons.rounded.FlipCameraIos
 import androidx.compose.material.icons.rounded.GridOn
-import androidx.compose.material.icons.rounded.History
+import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.West
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import kotlin.math.roundToInt
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import com.vishnu.campalette.MainActivity
+import com.vishnu.campalette.PaletteColor
+import com.vishnu.campalette.RadialMenuState
+import com.vishnu.campalette.ui.AtelierData
+import com.vishnu.campalette.ui.components.AdaptiveLayout
+import com.vishnu.campalette.ui.components.AtelierTag
+import com.vishnu.campalette.ui.components.CameraPreview
+import com.vishnu.campalette.ui.components.CaptureProgress
+import com.vishnu.campalette.ui.components.PaletteListCard
+import com.vishnu.campalette.ui.components.PrimaryButton
+import com.vishnu.campalette.ui.components.SecondaryButton
+import com.vishnu.campalette.R
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
-import com.vishnu.campalette.ui.components.WavyProgressIndicator
-import com.vishnu.campalette.ui.theme.ExpressiveSpatialSpring
-import com.vishnu.campalette.ui.theme.ExpressiveEffectsSpring
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.unit.Dp
-import com.vishnu.campalette.MainActivity
-import com.vishnu.campalette.PaletteColor
-import com.vishnu.campalette.RadialMenuState
-import com.vishnu.campalette.R
-import com.vishnu.campalette.ui.AtelierData
-import com.vishnu.campalette.ui.components.AtelierLabelTag
-import com.vishnu.campalette.ui.components.GlassPanel
-import com.vishnu.campalette.ui.components.GradientPrimaryButton
-import com.vishnu.campalette.ui.components.PaletteStrip
-import com.vishnu.campalette.ui.components.TechnicalValue
-import com.vishnu.campalette.ui.theme.AtelierPrimaryFixed
-import com.vishnu.campalette.ui.theme.AtelierRoundedExtra
-import com.vishnu.campalette.ui.theme.AtelierSurface
-import com.vishnu.campalette.ui.theme.AtelierTheme
-import kotlinx.coroutines.delay
 
+/**
+ * State Holders
+ */
+data class LiveCameraState(
+    val palette: List<PaletteColor>,
+    val selectedColor: PaletteColor?,
+    val isCapturing: Boolean,
+    val hasCapturedPalette: Boolean,
+    val paletteName: String,
+    val harmonyLabel: String,
+    val previewSize: IntSize
+)
+
+/**
+ * Live Camera Screen
+ * Implements a 3-layer architecture:
+ * 1. Background: Camera Preview or Captured Image
+ * 2. Middle: Chrome (Top/Bottom bars)
+ * 3. Foreground: Radial Menu or Overlays
+ */
 @Composable
 fun LiveCameraScreen(
+    state: LiveCameraState,
     activity: MainActivity,
-    modifier: Modifier,
-    capturedImage: android.graphics.Bitmap?,
-    palette: List<PaletteColor>,
-    selectedColor: PaletteColor?,
+    capturedImage: Bitmap?,
     radialMenuState: RadialMenuState?,
-    keepReticle: Boolean,
     gridEnabled: Boolean,
     flashEnabled: Boolean,
     flashAvailable: Boolean,
     lensFacing: Int,
-    previewSize: IntSize,
-    hasCapturedPalette: Boolean,
-    paletteName: String,
-    paletteSource: String,
-    harmonyLabel: String,
-    isCapturing: Boolean = false,
-    onClearCapture: (() -> Unit)? = null,
+    largeTouchTargets: Boolean,
+    onCapture: () -> Unit,
+    onClearCapture: () -> Unit,
     onMenuClick: () -> Unit,
-    onProfileClick: () -> Unit,
+    onEditPalette: () -> Unit,
     onPreviewMeasured: (IntSize) -> Unit,
     onFlipCamera: () -> Unit,
     onToggleFlash: () -> Unit,
     onToggleGrid: () -> Unit,
     onFlashAvailabilityChanged: (Boolean) -> Unit,
-    onSampleTap: (android.graphics.Bitmap, androidx.compose.ui.geometry.Offset, IntSize) -> Unit,
-    onSampleLongPress: (android.graphics.Bitmap, androidx.compose.ui.geometry.Offset, IntSize) -> Unit,
+    onSampleTap: (Bitmap, Offset, IntSize) -> Unit,
+    onSampleLongPress: (Bitmap, Offset, IntSize) -> Unit,
     onColorSelected: (PaletteColor) -> Unit,
-    onCameraError: (String) -> Unit
+    onCameraError: (String) -> Unit,
+    onImportGallery: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val activeColor = selectedColor ?: palette.firstOrNull()
-    val navInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    var sampledPoint by remember { mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
-    val overlayWhite = MaterialTheme.colorScheme.onPrimary
-    val overlayPanel = AtelierTheme.colors.surfaceContainerLowest.copy(alpha = 0.14f)
-
-    BoxWithConstraints(modifier = modifier.background(MaterialTheme.colorScheme.inverseSurface)) {
-        val sidePadding = 18.dp
-        val bottomStackPadding = navInset + 98.dp
-
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .onSizeChanged(onPreviewMeasured)
-        ) {
+    Box(modifier = modifier.fillMaxSize().background(Color.Black)) {
+        if (capturedImage != null) {
+            androidx.compose.foundation.Image(
+                bitmap = capturedImage.asImageBitmap(),
+                contentDescription = "Captured Image",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .onSizeChanged(onPreviewMeasured)
+                    .pointerInput(capturedImage) {
+                        detectTapGestures(
+                            onTap = { onSampleTap(capturedImage, it, size) },
+                            onLongPress = { onSampleLongPress(capturedImage, it, size) }
+                        )
+                    },
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            )
+        } else {
             CameraPreview(
-                activity = activity,
                 modifier = Modifier.fillMaxSize(),
                 lensFacing = lensFacing,
-                torchEnabled = flashEnabled,
+                flashEnabled = flashEnabled,
+                gridEnabled = gridEnabled,
+                onPreviewMeasured = onPreviewMeasured,
                 onFlashAvailabilityChanged = onFlashAvailabilityChanged,
-                onError = onCameraError
+                onCameraError = onCameraError,
+                onSampleTap = onSampleTap,
+                onSampleLongPress = onSampleLongPress,
+                activity = activity
             )
+        }
 
-            capturedImage?.let { bitmap ->
-                AnimatedVisibility(
-                    visible = capturedImage != null,
-                    enter = fadeIn(tween(180)) + scaleIn(tween(200, delayMillis = 20), initialScale = 0.96f),
-                    exit = fadeOut(tween(150))
-                ) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = stringResource(R.string.capture_button),
-                        contentScale = ContentScale.FillBounds,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(bitmap, previewSize) {
-                                detectTapGestures(
-                                    onTap = {
-                                        sampledPoint = it
-                                        onSampleTap(bitmap, it, previewSize)
-                                    },
-                                    onLongPress = {
-                                        sampledPoint = it
-                                        onSampleLongPress(bitmap, it, previewSize)
-                                    }
-                                )
-                            }
-                    )
-                }
-            }
-
-            sampledPoint?.let { point ->
-                SampledPointIndicator(
-                    point = point,
-                    onFinish = { sampledPoint = null }
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CameraChromeButton(
+                onClick = if (capturedImage != null) onClearCapture else onImportGallery,
+                contentDescription = if (capturedImage != null) "Clear capture" else "Import photo"
+            ) {
+                Icon(
+                    if (capturedImage != null) Icons.Rounded.Close else Icons.Rounded.Image,
+                    contentDescription = null,
+                    tint = Color.White
                 )
             }
 
-            if (gridEnabled) {
-                GridOverlay(modifier = Modifier.fillMaxSize())
-            }
-
-            LiveTopBar(
-                onMenuClick = onMenuClick,
-                onProfileClick = onProfileClick
-            )
-
-            if (isCapturing) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .width(180.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.85f))
-                        .padding(horizontal = 24.dp, vertical = 20.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "Analyzing Colors...",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.inverseOnSurface
+            if (capturedImage != null) {
+                CameraChromeButton(onClick = onMenuClick, contentDescription = "Open library") {
+                    Icon(Icons.Rounded.Palette, contentDescription = null, tint = Color.White)
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (flashAvailable) {
+                        CameraChromeButton(onClick = onToggleFlash, contentDescription = "Toggle flash") {
+                            Icon(
+                                if (flashEnabled) Icons.Rounded.FlashOn else Icons.Rounded.FlashOff,
+                                contentDescription = null,
+                                tint = if (flashEnabled) Color(0xFFFFD60A) else Color.White
+                            )
+                        }
+                    }
+                    CameraChromeButton(onClick = onToggleGrid, contentDescription = "Toggle grid") {
+                        Icon(
+                            Icons.Rounded.GridOn,
+                            contentDescription = null,
+                            tint = if (gridEnabled) Color(0xFFFFD60A) else Color.White
                         )
-                        WavyProgressIndicator(
-                            color = MaterialTheme.colorScheme.inversePrimary,
-                            strokeWidth = 3.5.dp,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(20.dp)
-                        )
+                    }
+                    CameraChromeButton(onClick = onFlipCamera, contentDescription = "Flip camera") {
+                        Icon(Icons.Rounded.FlipCameraIos, contentDescription = null, tint = Color.White)
                     }
                 }
             }
+        }
 
-            if (capturedImage != null && onClearCapture != null) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .statusBarsPadding()
-                        .padding(start = 14.dp, top = 64.dp)
-                        .size(48.dp)
-                        .clip(CircleShape)
-                        .background(AtelierTheme.colors.surfaceContainerLowest.copy(alpha = 0.82f))
-                        .clickable(onClick = onClearCapture),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.Rounded.Close,
-                        contentDescription = stringResource(R.string.back_to_app),
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
-
-            if (keepReticle) {
-                activeColor?.let {
-                    ReticleChip(
-                        modifier = Modifier.align(Alignment.Center),
-                        activeColor = it,
-                        overlayWhite = overlayWhite
-                    )
-                }
-            }
-
-            AnimatedVisibility(
-                visible = radialMenuState != null && capturedImage != null,
-                enter = fadeIn(tween(160)) + scaleIn(tween(180), initialScale = 0.96f),
-                exit = fadeOut(tween(120)) + scaleOut(tween(140), targetScale = 0.98f)
-            ) {
-                radialMenuState?.let { state ->
-                    RadialPaletteMenu(
-                        modifier = Modifier.fillMaxSize(),
-                        center = state.center,
-                        colors = palette.map { it.color },
-                        selectedIndex = state.selectedIndex,
-                        touchedColor = state.touchedColor
-                    )
-                }
-            }
-
-            Column(
+        AnimatedVisibility(
+            visible = capturedImage != null || state.isCapturing,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(start = 14.dp, end = 14.dp, bottom = 112.dp),
+            enter = fadeIn(tween(180)),
+            exit = fadeOut(tween(140))
+        ) {
+            Surface(
                 modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = sidePadding, bottom = bottomStackPadding + 24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .fillMaxWidth()
+                    .shadow(10.dp, RoundedCornerShape(22.dp), clip = false),
+                shape = RoundedCornerShape(22.dp),
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+                contentColor = MaterialTheme.colorScheme.onSurface
             ) {
-                CameraControlButton(
-                    icon = Icons.Rounded.FlipCameraIos,
-                    active = lensFacing == CameraSelector.LENS_FACING_FRONT,
-                    enabled = true,
-                    label = stringResource(R.string.camera_control_flip),
-                    onClick = onFlipCamera
-                )
-                CameraControlButton(
-                    icon = Icons.Rounded.FlashOn,
-                    active = flashEnabled,
-                    enabled = flashAvailable,
-                    label = stringResource(R.string.camera_control_flash),
-                    onClick = onToggleFlash
-                )
-                CameraControlButton(
-                    icon = Icons.Rounded.GridOn,
-                    active = gridEnabled,
-                    enabled = true,
-                    label = stringResource(R.string.camera_control_grid),
-                    onClick = onToggleGrid
-                )
-            }
-
-            if (hasCapturedPalette) {
-                AnimatedVisibility(
-                    visible = hasCapturedPalette,
-                    enter = fadeIn(tween(180)) + scaleIn(tween(200, delayMillis = 60), initialScale = 0.94f),
-                    exit = fadeOut(tween(160))
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(start = 16.dp, end = 16.dp, bottom = bottomStackPadding),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                if (state.isCapturing) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(22.dp),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        GlassPanel(
-                            modifier = Modifier.fillMaxWidth(0.92f),
-                            background = overlayPanel,
-                            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp)
+                        CaptureProgress()
+                        Spacer(Modifier.width(14.dp))
+                        Text("Finding colors", style = MaterialTheme.typography.titleMedium)
+                    }
+                } else if (state.palette.isNotEmpty()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    Text(
-                                        text = paletteName,
-                                        style = MaterialTheme.typography.headlineSmall.copy(fontStyle = FontStyle.Italic),
-                                        color = MaterialTheme.colorScheme.onPrimary,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = harmonyLabel,
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = overlayWhite.copy(alpha = 0.8f),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                                if (activeColor != null) {
-                                    PaletteStrip(
-                                        palette = palette.take(5),
-                                        selectedHex = activeColor.hexCode,
-                                        labelColor = overlayWhite,
-                                        onColorSelected = onColorSelected,
-                                        trailingAdd = null,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = state.paletteName.ifBlank { "Live palette" },
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 1
+                                )
+                                Text(
+                                    text = "${state.palette.size} colors",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
                             }
+                            Text(
+                                text = "Tap to inspect",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(if (largeTouchTargets) 64.dp else 56.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                        ) {
+                            state.palette.forEach { paletteColor ->
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .fillMaxHeight()
+                                        .background(Color(paletteColor.color))
+                                        .clickable { onColorSelected(paletteColor) }
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            SecondaryButton(
+                                text = "Retake",
+                                onClick = onClearCapture,
+                                modifier = Modifier.weight(1f)
+                            )
+                            PrimaryButton(
+                                text = "Edit palette",
+                                onClick = onEditPalette,
+                                modifier = Modifier.weight(1f)
+                            )
                         }
                     }
                 }
             }
         }
-    }
-}
 
-@Composable
-private fun ReticleChip(
-    modifier: Modifier = Modifier,
-    activeColor: PaletteColor,
-    overlayWhite: Color
-) {
-    val compact = LocalConfiguration.current.screenWidthDp < 400 || LocalDensity.current.fontScale > 1.1f
-    BoxWithConstraints(modifier = modifier.padding(horizontal = 24.dp)) {
-        val textModifier = if (compact) Modifier.fillMaxWidth() else Modifier.widthIn(max = maxWidth * 0.46f)
-        if (compact) {
-            Column(
-                modifier = Modifier.fillMaxWidth(0.78f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+        AnimatedVisibility(
+            visible = state.palette.isNotEmpty() && !state.isCapturing && capturedImage == null,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(start = 18.dp, end = 18.dp, bottom = 200.dp),
+            enter = fadeIn(tween(180)),
+            exit = fadeOut(tween(120))
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = Color.Black.copy(alpha = 0.46f)
             ) {
-                ReticleTarget(overlayWhite = overlayWhite)
-                ReticleInfoCard(
-                    modifier = textModifier,
-                    activeColor = activeColor,
-                    overlayWhite = overlayWhite
-                )
+                Row(
+                    modifier = Modifier.padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Live",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    ) {
+                        state.palette.forEach { paletteColor ->
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .background(Color(paletteColor.color))
+                                    .clickable { onColorSelected(paletteColor) }
+                            )
+                        }
+                    }
+                }
             }
-        } else {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(18.dp)
-            ) {
-                ReticleTarget(overlayWhite = overlayWhite)
-                ReticleInfoCard(
-                    modifier = textModifier,
-                    activeColor = activeColor,
-                    overlayWhite = overlayWhite
-                )
-            }
+        }
+
+        AnimatedVisibility(
+            visible = capturedImage == null && !state.isCapturing,
+            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 112.dp),
+            enter = fadeIn(tween(140)),
+            exit = fadeOut(tween(100))
+        ) {
+            CameraShutterButton(onClick = onCapture)
+        }
+
+        radialMenuState?.let { radial ->
+            Box(
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            (radial.center.x - 24.dp.toPx()).roundToInt(),
+                            (radial.center.y - 24.dp.toPx()).roundToInt()
+                        )
+                    }
+                    .size(48.dp)
+                    .border(2.dp, Color.White, RoundedCornerShape(24.dp))
+            )
         }
     }
 }
 
 @Composable
-private fun ReticleTarget(overlayWhite: Color) {
-    Canvas(modifier = Modifier.size(80.dp)) {
-        drawCircle(
-            color = overlayWhite.copy(alpha = 0.42f),
-            style = Stroke(width = 2.dp.toPx())
-        )
-        drawCircle(color = overlayWhite, radius = 2.dp.toPx())
-    }
-}
-
-@Composable
-private fun ReticleInfoCard(
-    modifier: Modifier,
-    activeColor: PaletteColor,
-    overlayWhite: Color
-) {
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(22.dp))
-            .background(MaterialTheme.colorScheme.inverseSurface.copy(alpha = 0.34f))
-            .padding(horizontal = 14.dp, vertical = 10.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            text = activeColor.hexCode,
-            style = MaterialTheme.typography.headlineSmall.copy(fontStyle = FontStyle.Italic),
-            color = overlayWhite,
-            maxLines = 1
-        )
-        Text(
-            text = activeColor.name.uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            color = overlayWhite.copy(alpha = 0.8f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-    }
-}
-
-@Composable
-private fun CameraControlButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    active: Boolean,
-    enabled: Boolean,
-    label: String,
-    onClick: () -> Unit
-) {
-    val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.88f else 1f,
-        animationSpec = spring(dampingRatio = 0.7f, stiffness = 400f),
-        label = "cameraCtrlScale"
+private fun CameraShutterButton(onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val shutterScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.93f else 1f,
+        animationSpec = tween(110),
+        label = "Shutter press"
     )
-    val background = when {
-        !enabled -> AtelierTheme.colors.surfaceContainerLowest.copy(alpha = 0.08f)
-        active -> MaterialTheme.colorScheme.primary.copy(alpha = 0.78f)
-        else -> AtelierTheme.colors.surfaceContainerLowest.copy(alpha = 0.12f)
-    }
-    val state = when {
-        !enabled -> stringResource(R.string.camera_control_unavailable, label)
-        active -> stringResource(R.string.camera_control_on, label)
-        else -> stringResource(R.string.camera_control_off, label)
-    }
-
-    val ringAlpha by animateFloatAsState(
-        targetValue = if (active) 1f else 0f,
-        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
-        label = "ctrlRingAlpha"
-    )
-    val ringColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.5f)
-
     Box(
         modifier = Modifier
-            .scale(scale)
-            .size(52.dp)
-            .clip(CircleShape)
-            .then(
-                if (active) Modifier.drawBehind {
-                    drawCircle(
-                        color = ringColor.copy(alpha = ringAlpha),
-                        radius = this.size.minDimension / 2f + 2.dp.toPx(),
-                        style = Stroke(width = 1.5.dp.toPx())
-                    )
-                } else Modifier
-            )
-            .background(background)
+            .size(76.dp)
+            .scale(shutterScale)
+            .shadow(8.dp, CircleShape, clip = false)
+            .border(4.dp, Color.White, CircleShape)
+            .background(Color.Black.copy(alpha = 0.16f), CircleShape)
             .semantics {
+                contentDescription = "Capture photo"
                 role = Role.Button
-                contentDescription = label
-                stateDescription = state
             }
-            .clickable(interactionSource = interaction, indication = null, enabled = enabled, onClick = onClick),
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            ),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            icon,
-            contentDescription = label,
-            tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = if (enabled) 1f else 0.4f)
+        Box(
+            modifier = Modifier
+                .size(60.dp)
+                .background(Color.White, CircleShape)
         )
     }
 }
 
 @Composable
-private fun LiveTopBar(
-    onMenuClick: () -> Unit,
-    onProfileClick: () -> Unit
+private fun CameraChromeButton(
+    onClick: () -> Unit,
+    contentDescription: String,
+    content: @Composable () -> Unit
 ) {
-    val openHistoryLabel = stringResource(R.string.open_library)
-    val openSettingsLabel = stringResource(R.string.open_settings)
     Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 14.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(AtelierTheme.colors.surfaceContainerLow.copy(alpha = 0.72f))
-                    .semantics {
-                        role = Role.Button
-                        contentDescription = openHistoryLabel
-                    }
-                    .clickable(onClick = onMenuClick),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Rounded.History,
-                    contentDescription = openHistoryLabel,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-            Text(
-                text = stringResource(R.string.atelier_brand),
-                style = MaterialTheme.typography.titleMedium.copy(fontStyle = FontStyle.Italic),
-                color = MaterialTheme.colorScheme.onPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 12.dp),
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-            )
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(AtelierTheme.colors.surfaceContainerLow.copy(alpha = 0.72f))
-                    .semantics {
-                        role = Role.Button
-                        contentDescription = openSettingsLabel
-                    }
-                    .clickable(onClick = onProfileClick),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Rounded.Settings,
-                    contentDescription = openSettingsLabel,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun GridOverlay(modifier: Modifier = Modifier) {
-    val overlayColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.22f)
-    Canvas(modifier = modifier) {
-        val stroke = 1.dp.toPx()
-        val color = overlayColor
-        val oneThirdX = size.width / 3f
-        val twoThirdX = oneThirdX * 2f
-        val oneThirdY = size.height / 3f
-        val twoThirdY = oneThirdY * 2f
-        drawLine(color, start = androidx.compose.ui.geometry.Offset(oneThirdX, 0f), end = androidx.compose.ui.geometry.Offset(oneThirdX, size.height), strokeWidth = stroke)
-        drawLine(color, start = androidx.compose.ui.geometry.Offset(twoThirdX, 0f), end = androidx.compose.ui.geometry.Offset(twoThirdX, size.height), strokeWidth = stroke)
-        drawLine(color, start = androidx.compose.ui.geometry.Offset(0f, oneThirdY), end = androidx.compose.ui.geometry.Offset(size.width, oneThirdY), strokeWidth = stroke)
-        drawLine(color, start = androidx.compose.ui.geometry.Offset(0f, twoThirdY), end = androidx.compose.ui.geometry.Offset(size.width, twoThirdY), strokeWidth = stroke)
-    }
-}
-
-@Composable
-private fun CameraPreview(
-    activity: MainActivity,
-    modifier: Modifier = Modifier,
-    lensFacing: Int,
-    torchEnabled: Boolean,
-    onFlashAvailabilityChanged: (Boolean) -> Unit,
-    onError: (String) -> Unit
-) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val boundCamera = remember { mutableStateOf<Camera?>(null) }
-    val previewView = remember {
-        PreviewView(context).apply {
-            scaleType = PreviewView.ScaleType.FILL_CENTER
-        }
-    }
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-
-    DisposableEffect(lensFacing) {
-        var isDisposed = false
-        val executor = ContextCompat.getMainExecutor(context)
-        val listener = Runnable {
-            if (isDisposed) return@Runnable
-            try {
-                val cameraProvider = cameraProviderFuture.get()
-                val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(previewView.surfaceProvider)
-                }
-                val capture = ImageCapture.Builder()
-                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                    .build()
-                cameraProvider.unbindAll()
-                val selector = CameraSelector.Builder().requireLensFacing(lensFacing).build()
-                val camera = cameraProvider.bindToLifecycle(lifecycleOwner, selector, preview, capture)
-                boundCamera.value = camera
-                activity.currentImageCapture = capture
-                val hasFlash = camera.cameraInfo.hasFlashUnit()
-                onFlashAvailabilityChanged(hasFlash)
-            } catch (e: Exception) {
-                Log.d("CameraPreview", "Camera bind failed", e)
-                boundCamera.value = null
-                activity.currentImageCapture = null
-                onFlashAvailabilityChanged(false)
-                onError(context.getString(R.string.camera_bind_error))
-            }
-        }
-        cameraProviderFuture.addListener(listener, executor)
-        onDispose {
-            isDisposed = true
-            try {
-                if (cameraProviderFuture.isDone) {
-                    cameraProviderFuture.get().unbindAll()
-                }
-            } catch (_: Exception) {
-            } finally {
-                boundCamera.value = null
-                activity.currentImageCapture = null
-            }
-        }
-    }
-
-    DisposableEffect(boundCamera.value, torchEnabled) {
-        val camera = boundCamera.value
-        if (camera != null) {
-            val hasFlash = camera.cameraInfo.hasFlashUnit()
-            try {
-                camera.cameraControl.enableTorch(hasFlash && torchEnabled)
-            } catch (_: Exception) {
-                onFlashAvailabilityChanged(false)
-            }
-        }
-        onDispose { }
-    }
-
-    AndroidView(factory = { previewView }, modifier = modifier)
-}
-
-@Composable
-private fun RadialPaletteMenu(
-    modifier: Modifier,
-    center: androidx.compose.ui.geometry.Offset,
-    colors: List<Int>,
-    selectedIndex: Int,
-    touchedColor: Int
-) {
-    val highlightColor = AtelierPrimaryFixed.copy(alpha = 0.3f)
-    val strokeColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
-    Canvas(modifier = modifier) {
-        if (colors.isEmpty()) return@Canvas
-        val ringRadius = 112.dp.toPx()
-        val ringStroke = 28.dp.toPx()
-        val highlightStroke = ringStroke + 10.dp.toPx()
-        val sweep = 360f / colors.size
-        val topLeft = androidx.compose.ui.geometry.Offset(center.x - ringRadius, center.y - ringRadius)
-        val size = androidx.compose.ui.geometry.Size(ringRadius * 2, ringRadius * 2)
-
-        if (selectedIndex in colors.indices) {
-            drawArc(
-                color = highlightColor,
-                startAngle = -90f + selectedIndex * sweep,
-                sweepAngle = sweep,
-                useCenter = false,
-                topLeft = topLeft,
-                size = size,
-                style = Stroke(width = highlightStroke, cap = StrokeCap.Round)
-            )
-        }
-        colors.forEachIndexed { index, colorValue ->
-            drawArc(
-                color = Color(colorValue),
-                startAngle = -90f + index * sweep,
-                sweepAngle = sweep,
-                useCenter = false,
-                topLeft = topLeft,
-                size = size,
-                style = Stroke(width = ringStroke, cap = StrokeCap.Round)
-            )
-        }
-        drawCircle(color = Color(touchedColor), radius = 22.dp.toPx(), center = center)
-        drawCircle(
-            color = strokeColor,
-            radius = 24.dp.toPx(),
-            center = center,
-            style = Stroke(width = 2.dp.toPx())
-        )
-    }
-}
-
-@Composable
-private fun SampledPointIndicator(
-    point: androidx.compose.ui.geometry.Offset,
-    onFinish: () -> Unit
-) {
-    val alphaTarget = remember { mutableFloatStateOf(1f) }
-    val scaleTarget = remember { mutableFloatStateOf(0.4f) }
-    LaunchedEffect(point) {
-        scaleTarget.value = 1.3f
-        alphaTarget.value = 0f
-        delay(400)
-        onFinish()
-    }
-    val indicatorAlpha by animateFloatAsState(
-        targetValue = alphaTarget.value,
-        animationSpec = ExpressiveEffectsSpring,
-        label = "sampleAlpha"
-    )
-    val indicatorScale by animateFloatAsState(
-        targetValue = scaleTarget.value,
-        animationSpec = ExpressiveSpatialSpring,
-        label = "sampleScale"
-    )
-    Box(
-        modifier = Modifier
-            .offset { IntOffset((point.x - 24.dp.toPx()).toInt(), (point.y - 24.dp.toPx()).toInt()) }
-            .graphicsLayer(
-                alpha = indicatorAlpha,
-                scaleX = indicatorScale,
-                scaleY = indicatorScale
-            )
             .size(48.dp)
-            .drawBehind {
-                drawCircle(
-                    color = Color.White,
-                    radius = 20.dp.toPx(),
-                    style = Stroke(width = 2.5.dp.toPx())
-                )
-                drawCircle(
-                    color = Color.White.copy(alpha = 0.45f),
-                    radius = 6.dp.toPx()
-                )
+            .semantics {
+                this.contentDescription = contentDescription
+                role = Role.Button
             }
-    )
+            .clip(CircleShape)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Surface(
+            modifier = Modifier
+                .size(44.dp)
+                .border(1.dp, Color.White.copy(alpha = 0.18f), CircleShape),
+            shape = CircleShape,
+            color = Color.Black.copy(alpha = 0.34f),
+            contentColor = Color.White
+        ) {
+            Box(contentAlignment = Alignment.Center) { content() }
+        }
+    }
 }
 
+/**
+ * Color Detail Screen
+ */
 @Composable
 fun ColorDetailScreen(
-    modifier: Modifier,
     paletteColor: PaletteColor,
     onCopy: (String) -> Unit,
     onAddToPalette: () -> Unit,
-    onBack: () -> Unit
+    onRemoveFromPalette: () -> Unit,
+    onShowColorBlindness: () -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    val cmyk = AtelierData.rgbToCmyk(paletteColor.red, paletteColor.green, paletteColor.blue)
-    val backLabel = stringResource(R.string.back_to_app)
-    val copyHexLabel = stringResource(R.string.copy_hex)
-    Box(modifier = modifier.background(Color(paletteColor.color))) {
+    val heroColor = Color(paletteColor.color)
+    val heroContentColor = if (heroColor.luminance() > 0.45f) Color.Black else Color.White
+    val groupedShape = RoundedCornerShape(12.dp)
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .statusBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .height(232.dp)
+                .background(heroColor)
         ) {
-            Box(
+            IconButton(
+                onClick = onBack,
                 modifier = Modifier
+                    .statusBarsPadding()
+                    .padding(start = 8.dp, top = 4.dp)
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(AtelierSurface.copy(alpha = 0.82f))
-                    .semantics {
-                        role = Role.Button
-                        contentDescription = backLabel
-                    }
-                    .clickable(onClick = onBack),
-                contentAlignment = Alignment.Center
+                    .background(
+                        if (heroContentColor == Color.White) {
+                            Color.Black.copy(alpha = 0.18f)
+                        } else {
+                            Color.White.copy(alpha = 0.5f)
+                        }
+                    )
             ) {
-                Icon(Icons.Rounded.West, contentDescription = backLabel, tint = MaterialTheme.colorScheme.primary)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    contentDescription = "Back",
+                    tint = heroContentColor
+                )
             }
-        }
-        Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Bottom) {
-            Box(modifier = Modifier.fillMaxHeight(0.4f))
+
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(topStart = AtelierRoundedExtra, topEnd = AtelierRoundedExtra))
-                    .background(AtelierTheme.colors.surfaceContainerLowest.copy(alpha = 0.94f))
-                    .padding(start = 24.dp, top = 28.dp, end = 24.dp, bottom = 28.dp)
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = 20.dp, vertical = 18.dp)
             ) {
-                AtelierLabelTag(stringResource(R.string.detail_tag))
-                Spacer(modifier = Modifier.height(12.dp))
                 Text(
                     text = paletteColor.hexCode,
-                    style = MaterialTheme.typography.headlineLarge.copy(fontStyle = FontStyle.Italic),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .semantics {
-                            role = Role.Button
-                            contentDescription = copyHexLabel
-                        }
-                        .clickable { onCopy(paletteColor.hexCode) }
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        fontSize = 34.sp,
+                        lineHeight = 41.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = heroContentColor
                 )
-                Spacer(modifier = Modifier.height(32.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-                    TechnicalValue("RGB", "${paletteColor.red}, ${paletteColor.green}, ${paletteColor.blue}")
-                    TechnicalValue(
-                        "CMYK",
-                        "${AtelierData.run { cmyk[0].format0() }} ${AtelierData.run { cmyk[1].format0() }} ${AtelierData.run { cmyk[2].format0() }} ${AtelierData.run { cmyk[3].format0() }}"
-                    )
-                }
-                Spacer(modifier = Modifier.height(32.dp))
                 Text(
-                    text = paletteColor.name,
+                    text = AtelierData.guessColorName(paletteColor.color),
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.height(32.dp))
-                GradientPrimaryButton(
-                    text = stringResource(R.string.add_to_palette),
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onAddToPalette
+                    color = heroContentColor.copy(alpha = 0.78f)
                 )
             }
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 20.dp)
+        ) {
+            val hslArray = AtelierData.rgbToHsl(paletteColor.red, paletteColor.green, paletteColor.blue)
+            val formats = listOf(
+                "Hex" to paletteColor.hexCode,
+                "RGB" to "rgb(${paletteColor.red}, ${paletteColor.green}, ${paletteColor.blue})",
+                "HSL" to "hsl(${hslArray[0].roundToInt()}, ${hslArray[1].roundToInt()}%, ${hslArray[2].roundToInt()}%)"
+            )
+
+            Text(
+                text = "Color values",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = groupedShape,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column {
+                    formats.forEachIndexed { index, (label, value) ->
+                        FormatRow(
+                            label = label,
+                            value = value,
+                            showDivider = index < formats.lastIndex,
+                            onCopy = { onCopy(value) }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            val relatedColors = AtelierData.generateRelatedColors(paletteColor.color)
+
+            Text(
+                text = "Tints",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+            )
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(relatedColors.first.size) { i ->
+                    RelatedColorSwatch(color = Color(relatedColors.first[i].color))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Shades",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 4.dp, bottom = 8.dp)
+            )
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(relatedColors.second.size) { i ->
+                    RelatedColorSwatch(color = Color(relatedColors.second[i].color))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Surface(
+                onClick = onAddToPalette,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary
+            ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text(
+                        text = "Edit palette",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = groupedShape,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                Column {
+                    DetailActionRow(
+                        label = "Color vision",
+                        trailing = "›",
+                        onClick = onShowColorBlindness
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(start = 16.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+                    )
+                    DetailActionRow(
+                        label = "Remove from palette",
+                        labelColor = Color(0xFFFF3B30),
+                        onClick = onRemoveFromPalette
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+private fun FormatRow(
+    label: String,
+    value: String,
+    showDivider: Boolean,
+    onCopy: () -> Unit
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .clickable(onClick = onCopy)
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.width(48.dp)
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = "Copy",
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        if (showDivider) {
+            HorizontalDivider(
+                modifier = Modifier.padding(start = 64.dp),
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun RelatedColorSwatch(color: Color) {
+    Box(
+        modifier = Modifier
+            .size(52.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(color)
+            .border(
+                width = 0.5.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(14.dp)
+            )
+    )
+}
+
+@Composable
+private fun DetailActionRow(
+    label: String,
+    onClick: () -> Unit,
+    trailing: String? = null,
+    labelColor: Color = MaterialTheme.colorScheme.onSurface
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = labelColor,
+            modifier = Modifier.weight(1f)
+        )
+        trailing?.let {
+            Text(
+                text = it,
+                fontSize = 28.sp,
+                lineHeight = 28.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
+            )
         }
     }
 }

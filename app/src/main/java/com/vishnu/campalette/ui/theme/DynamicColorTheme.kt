@@ -1,19 +1,14 @@
 package com.vishnu.campalette.ui.theme
 
-import android.app.Activity
 import android.graphics.Bitmap
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
 import androidx.palette.graphics.Palette
 
 @Immutable
@@ -69,12 +64,12 @@ fun createDynamicColors(
     }
 
     return DynamicThemeColors(
-        primaryShift = blendColors(basePrimary, seed, adjustedBlend),
-        primaryContainerShift = blendColors(basePrimaryContainer, seed, adjustedBlend * 0.85f),
-        primaryFixedShift = blendColors(basePrimaryFixed, seed, adjustedBlend * 0.6f),
-        primaryFixedDimShift = blendColors(basePrimaryFixedDim, seed, adjustedBlend * 0.6f),
+        primaryShift = blendColors(basePrimary, seed, adjustedBlend * 0.55f),
+        primaryContainerShift = blendColors(basePrimaryContainer, seed, adjustedBlend * 0.32f),
+        primaryFixedShift = blendColors(basePrimaryFixed, seed, adjustedBlend * 0.2f),
+        primaryFixedDimShift = blendColors(basePrimaryFixedDim, seed, adjustedBlend * 0.2f),
         surfaceTintShift = blendColors(baseSurfaceTint, seed, adjustedBlend * 0.3f),
-        surfaceContainerLowShift = blendColors(baseSurfaceContainerLow, seed, adjustedBlend * 0.04f),
+        surfaceContainerLowShift = baseSurfaceContainerLow,
         blendFactor = adjustedBlend
     )
 }
@@ -95,7 +90,14 @@ fun DynamicThemeProvider(
             baseSurfaceContainerLow = AtelierTheme.colors.surfaceContainerLow
         )
     } else {
-        DynamicThemeColors()
+        DynamicThemeColors(
+            primaryShift = MaterialTheme.colorScheme.primary,
+            primaryContainerShift = MaterialTheme.colorScheme.primaryContainer,
+            primaryFixedShift = AtelierTheme.colors.primaryFixed,
+            primaryFixedDimShift = AtelierTheme.colors.primaryFixedDim,
+            surfaceTintShift = MaterialTheme.colorScheme.surfaceTint,
+            surfaceContainerLowShift = AtelierTheme.colors.surfaceContainerLow
+        )
     }
 
     val currentColorScheme = MaterialTheme.colorScheme
@@ -132,21 +134,7 @@ fun DynamicThemeProvider(
             colorScheme = dynamicColorScheme,
             typography = MaterialTheme.typography,
             shapes = MaterialTheme.shapes
-        ) {
-            val view = LocalView.current
-            if (!view.isInEditMode) {
-                SideEffect {
-                    val window = (view.context as Activity).window
-                    val systemBarColor = dynamicColorScheme.surface
-                    window.statusBarColor = systemBarColor.copy(alpha = 0.95f).toArgb()
-                    window.navigationBarColor = systemBarColor.copy(alpha = 0.95f).toArgb()
-                    val isLightBars = systemBarColor.luminance() > 0.5f
-                    WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = isLightBars
-                    WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = isLightBars
-                }
-            }
-            content()
-        }
+        ) { content() }
     }
 }
 
@@ -164,3 +152,122 @@ val ExpressiveEffectsColorSpring = androidx.compose.animation.core.spring<Color>
     dampingRatio = 1.0f,
     stiffness = 400f
 )
+
+@Composable
+fun AnimatedDynamicThemeProvider(
+    dominantColor: Int?,
+    reducedMotion: Boolean = false,
+    content: @Composable () -> Unit
+) {
+    val targetDynamicColors = if (dominantColor != null) {
+        createDynamicColors(
+            seedColor = dominantColor,
+            basePrimary = MaterialTheme.colorScheme.primary,
+            basePrimaryContainer = MaterialTheme.colorScheme.primaryContainer,
+            basePrimaryFixed = AtelierTheme.colors.primaryFixed,
+            basePrimaryFixedDim = AtelierTheme.colors.primaryFixedDim,
+            baseSurfaceTint = MaterialTheme.colorScheme.surfaceTint,
+            baseSurfaceContainerLow = AtelierTheme.colors.surfaceContainerLow
+        )
+    } else {
+        DynamicThemeColors(
+            primaryShift = MaterialTheme.colorScheme.primary,
+            primaryContainerShift = MaterialTheme.colorScheme.primaryContainer,
+            primaryFixedShift = AtelierTheme.colors.primaryFixed,
+            primaryFixedDimShift = AtelierTheme.colors.primaryFixedDim,
+            surfaceTintShift = MaterialTheme.colorScheme.surfaceTint,
+            surfaceContainerLowShift = AtelierTheme.colors.surfaceContainerLow
+        )
+    }
+
+    val animSpec = if (reducedMotion) {
+        androidx.compose.animation.core.snap<Color>()
+    } else {
+        androidx.compose.animation.core.tween<Color>(durationMillis = 600, easing = androidx.compose.animation.core.FastOutSlowInEasing)
+    }
+
+    val animatedPrimary = androidx.compose.animation.animateColorAsState(
+        targetValue = targetDynamicColors.primaryShift,
+        animationSpec = animSpec,
+        label = "animPrimary"
+    ).value
+    val animatedPrimaryContainer = androidx.compose.animation.animateColorAsState(
+        targetValue = targetDynamicColors.primaryContainerShift,
+        animationSpec = animSpec,
+        label = "animPrimaryContainer"
+    ).value
+    val animatedSurfaceTint = androidx.compose.animation.animateColorAsState(
+        targetValue = targetDynamicColors.surfaceTintShift,
+        animationSpec = animSpec,
+        label = "animSurfaceTint"
+    ).value
+    val animatedPrimaryFixed = androidx.compose.animation.animateColorAsState(
+        targetValue = targetDynamicColors.primaryFixedShift,
+        animationSpec = animSpec,
+        label = "animPrimaryFixed"
+    ).value
+    val animatedPrimaryFixedDim = androidx.compose.animation.animateColorAsState(
+        targetValue = targetDynamicColors.primaryFixedDimShift,
+        animationSpec = animSpec,
+        label = "animPrimaryFixedDim"
+    ).value
+    val animatedSurfaceContainerLow = androidx.compose.animation.animateColorAsState(
+        targetValue = targetDynamicColors.surfaceContainerLowShift,
+        animationSpec = animSpec,
+        label = "animSurfaceContainerLow"
+    ).value
+
+    val currentColorScheme = MaterialTheme.colorScheme
+    val animatedColorScheme = remember(
+        animatedPrimary, animatedPrimaryContainer, animatedSurfaceTint, currentColorScheme
+    ) {
+        if (targetDynamicColors.blendFactor > 0f) {
+            currentColorScheme.copy(
+                primary = animatedPrimary,
+                primaryContainer = animatedPrimaryContainer,
+                surfaceTint = animatedSurfaceTint
+            )
+        } else {
+            currentColorScheme
+        }
+    }
+
+    val currentAtelierColors = LocalAtelierColors.current
+    val animatedAtelierColors = remember(
+        animatedPrimaryFixed, animatedPrimaryFixedDim, animatedSurfaceContainerLow, currentAtelierColors
+    ) {
+        if (targetDynamicColors.blendFactor > 0f) {
+            currentAtelierColors.copy(
+                primaryFixed = animatedPrimaryFixed,
+                primaryFixedDim = animatedPrimaryFixedDim,
+                surfaceContainerLow = animatedSurfaceContainerLow
+            )
+        } else {
+            currentAtelierColors
+        }
+    }
+
+    val animatedDynamicColors = remember(targetDynamicColors) {
+        targetDynamicColors.copy(
+            primaryShift = animatedPrimary,
+            primaryContainerShift = animatedPrimaryContainer,
+            primaryFixedShift = animatedPrimaryFixed,
+            primaryFixedDimShift = animatedPrimaryFixedDim,
+            surfaceTintShift = animatedSurfaceTint,
+            surfaceContainerLowShift = animatedSurfaceContainerLow
+        )
+    }
+
+    CompositionLocalProvider(
+        LocalDynamicThemeColors provides animatedDynamicColors,
+        LocalAtelierColors provides animatedAtelierColors
+    ) {
+        MaterialTheme(
+            colorScheme = animatedColorScheme,
+            typography = MaterialTheme.typography,
+            shapes = MaterialTheme.shapes
+        ) {
+            content()
+        }
+    }
+}
