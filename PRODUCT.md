@@ -31,7 +31,7 @@ Comforting, smooth, tactically precise. The app should feel like a well-made too
 
 1. **Color is the hero** — Every screen should let the colors breathe. The interface steps back so the captured palette is the focal point.
 2. **Tactile precision** — Interactions feel deliberate and satisfying. Haptics, animations, and transitions communicate that the tool is crafted, not assembled.
-3. **Warm editorial craft** — The visual language draws from artist studios and editorial design: serif headlines, generous whitespace, paper-like surfaces. Not cold or digital-feeling.
+3. **Quiet native craft** — Large sans-serif titles, generous whitespace, grouped surfaces, and restrained system color keep the app familiar and focused without feeling generic.
 4. **Quick to capture, deep to explore** — The path from "I see a color" to "I have a saved palette" should be fast. Exploration and editing should reward curiosity.
 5. **Respect the creative workflow** — A tool for people who make things. Professional without being intimidating, beautiful without being distracting.
 

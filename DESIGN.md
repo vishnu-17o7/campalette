@@ -67,23 +67,25 @@ Use tabular-looking hex values with bold sans-serif styling. Do not use all-caps
 | Search and buttons | 12–14dp |
 | Inset groups | 16dp |
 | Sheets | 28dp top corners |
-| Floating dock | 32dp capsule |
-| Dock height | 64dp |
+| Floating navigation island | 30dp capsule |
+| Navigation island | 252dp max width / 60dp height |
 | Camera shutter | 76dp outer / 60dp inner |
 
 Use 16–20dp screen insets, 8–12dp between related controls, and 20–28dp between sections. Separators begin after leading content rather than spanning through icons or swatches.
 
 ## Navigation
 
-### Floating Glass Dock
+### Floating Glass Navigation Island
 
 - Three equal destinations: Library, Camera, Settings.
-- Maximum width 350dp with 16dp side insets.
-- 30dp live blur, subtle noise, a hairline highlight, and no more than 3dp shadow.
+- Maximum width 252dp with 16dp minimum side insets.
+- 28dp live blur, subtle noise, a hairline highlight, and no more than 4dp shadow.
 - Camera uses dark translucent glass with white inactive items; grouped screens use light glass with dark items.
-- The selected item receives a compact translucent lens and accent-colored icon/label.
-- The dock is navigation only. Capture is never embedded in it.
-- Hide the dock during Editor, color detail, and export/detail overlays.
+- One continuous translucent lens marks the current screen. It tracks horizontal dragging 1:1, projects release velocity, then springs to Library, Camera, or Settings.
+- Tapping remains an equal first-class navigation path; the drag gesture is never required.
+- Reduced motion keeps direct tracking but snaps the lens without spatial settling.
+- The island is navigation only. Capture is never embedded in it.
+- Hide the island during Editor, color detail, and export/detail overlays.
 
 ### Transitions
 
@@ -92,13 +94,21 @@ Use 16–20dp screen insets, 8–12dp between related controls, and 20–28dp be
 - Modal tools rise as bottom sheets over a dimmed context.
 - Reduce motion replaces spatial transitions with immediate fades.
 
+### Controls
+
+- Press feedback is on touch-down: scale 0.97 with a critically damped spring (`damping 1.0`). No Material ripple.
+- The segmented control uses one sliding pill, the same motion language as the navigation island.
+- Switches use a 51 × 31dp track. The thumb tracks a drag 1:1, then springs; tap is critically damped with no bounce.
+- List rows highlight; they do not shrink.
+- Bounce (damping ~0.82) is only for a flick that already carried momentum.
+
 ## Screen Patterns
 
 ### Camera
 
 - Full-bleed preview under transparent system bars.
 - 44dp visible circular chrome inside 48dp touch targets.
-- A separate 76dp shutter sits above the dock and scales briefly on press.
+- A separate 76dp shutter sits above the navigation island and scales briefly on press.
 - Captured results show one compact review surface with swatches, Retake, and Edit palette.
 - Active palette sampling uses a small translucent strip, never a second navigation bar.
 
@@ -130,7 +140,7 @@ Use 16–20dp screen insets, 8–12dp between related controls, and 20–28dp be
 
 ## Logo
 
-The Campalette mark is a C-shaped camera lens with a white focus point and three small captured-color samples. The primary treatment is system-blue and white with yellow, red, and green optical details. It contains no text, remains inside the adaptive-icon safe zone, and has a monochrome themed-icon variant.
+The Campalette mark is a grayscale C-shaped camera lens with a single system-blue focus accent. It contains no text, remains inside the adaptive-icon safe zone, and has a fully monochrome themed-icon variant for Material You.
 
 ## Accessibility
 

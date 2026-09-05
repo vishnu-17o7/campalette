@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="512" height="512">
+  <title>Campalette Play Store icon</title>
+  <desc>The Campalette C-lens mark on a neutral full-bleed background.</desc>
+  <rect width="108" height="108" fill="#F4F4F5"/>
+  <path d="M70.96,81.14 A32,32 0 1 1 70.96,26.86 L66.45,34.08 A23.5,23.5 0 1 0 66.45,73.92 Z" fill="#52525B" stroke="#52525B" stroke-width="1.3" stroke-linejoin="round"/>
+  <path d="M74.57,29.48 A32,32 0 0 1 84.08,43.06 L76.08,45.96 A23.5,23.5 0 0 0 69.10,36.00 Z" fill="#71717A" stroke="#71717A" stroke-width="1.3" stroke-linejoin="round"/>
+  <path d="M85.31,47.35 A32,32 0 0 1 85.31,60.65 L76.98,58.89 A23.5,23.5 0 0 0 76.98,49.12 Z" fill="#A1A1AA" stroke="#A1A1AA" stroke-width="1.3" stroke-linejoin="round"/>
+  <path d="M84.08,64.95 A32,32 0 0 1 74.57,78.52 L69.10,72.00 A23.5,23.5 0 0 0 76.08,62.04 Z" fill="#71717A" stroke="#71717A" stroke-width="1.3" stroke-linejoin="round"/>
+  <circle cx="54" cy="54" r="20.9" fill="#27272A"/>
+  <circle cx="54" cy="54" r="15" fill="#71717A"/>
+  <circle cx="54" cy="54" r="9.72" fill="#2B78F0"/>
+  <circle cx="50.6" cy="50.6" r="2.59" fill="#FFFFFF"/>
+</svg>

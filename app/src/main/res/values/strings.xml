@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">camPalette</string>
-    <string name="take_photo">Capture</string>
-    <string name="camera_permission_required">Camera access powers the live palette sampler.</string>
-    <string name="grant_permission">Enable Camera</string>
-    <string name="color_palette">Current Palette</string>
+    <string name="app_name">Campalette</string>
     <string name="dominant_color">Dominant</string>
     <string name="vibrant_color">Vibrant</string>
     <string name="muted_color">Muted</string>
@@ -12,10 +8,9 @@
     <string name="dark_vibrant">Dark Vibrant</string>
     <string name="light_muted">Light Muted</string>
     <string name="dark_muted">Dark Muted</string>
-    <string name="hex_color">HEX: %s</string>
-    <string name="rgb_color">RGB: %1$d, %2$d, %3$d</string>
-    <string name="live_view">Live View</string>
+    <string name="additional_color">Color %1$d</string>
     <string name="camera_bind_error">Could not start the camera preview.</string>
+    <string name="camera_preview_sample">Camera preview. Tap to sample a color.</string>
     <string name="capture_unavailable">Camera is not ready yet.</string>
     <string name="capture_failed">Capture failed. Please try again.</string>
     <string name="palette_seed">Sampled</string>
@@ -25,86 +20,36 @@
     <string name="palette_tint">Tint</string>
     <string name="palette_shade">Shade</string>
     <string name="copied">Copied</string>
-    <string name="atelier_brand">CAMPALETTE</string>
-    <string name="atelier_tagline">DIGITAL ATELIER FOR LIVE COLOR STUDIES</string>
-    <string name="library">Library</string>
+    <string name="clipboard_color_label">Campalette color</string>
+    <string name="clipboard_palette_label">Campalette palette</string>
+    <string name="clipboard_export_label">Campalette export</string>
+    <string name="palette_saved">Palette saved</string>
+    <string name="color_saved">Color saved</string>
+    <string name="save_color">Save color</string>
+    <string name="save_palette">Save palette</string>
+    <string name="inspect_color">Inspect color %1$s</string>
+    <string name="accessibility_palette_colors">Colors: %1$s</string>
+    <string name="accessibility_delete_palette">Delete %1$s</string>
+    <string name="accessibility_delete_color">Delete color %1$s</string>
+    <string name="accessibility_move_color_up">Move color %1$s up</string>
+    <string name="accessibility_move_color_down">Move color %1$s down</string>
+    <string name="accessibility_save_palette">Save %1$s</string>
+    <string name="accessibility_save_palette_again">Save %1$s again</string>
+    <string name="save_related_color">Save related color %1$s</string>
     <string name="editor">Builder</string>
-    <string name="settings">Settings</string>
-    <string name="history">History</string>
     <string name="current_palette">Current Palette</string>
-    <string name="harmony">Harmony</string>
     <string name="palette_library_title">Curated Studies</string>
-    <string name="palette_library_body">Saved palettes are arranged as working studies first, then archived captures.</string>
-    <string name="palette_library_tag">RECENT</string>
-    <string name="palette_library_empty_title">No studies yet</string>
-    <string name="palette_library_empty_body">Capture a scene to build your first palette, or save one after refining it in the builder.</string>
-    <string name="palette_library_empty_primary">Open camera</string>
-    <string name="palette_library_empty_secondary">Open builder</string>
-    <string name="palette_featured_tag">FEATURED STUDY</string>
-    <string name="palette_archive_tag">ARCHIVE</string>
-    <string name="palette_open_action">Open palette</string>
-    <string name="palette_card_colors">%1$d-color study</string>
-    <string name="palette_card_meta">%1$s · %2$s</string>
-    <string name="settings_tag">STUDIO</string>
-    <string name="builder_tag">WORKBENCH</string>
-    <string name="detail_tag">CURRENT SELECTION</string>
-    <string name="camera_permission_tag">WELCOME</string>
-    <string name="onboarding_title">CAMPALETTE</string>
-    <string name="onboarding_body">Transform live scenes into warm editorial palettes with one tap.</string>
-    <string name="permission_cta">Grant camera access</string>
-    <string name="editor_name_label">Palette Name</string>
-    <string name="editor_name_placeholder">Untitled study</string>
-    <string name="editor_harmony_chip">Analyze Harmony</string>
     <string name="editor_inspect">Inspect color</string>
-    <string name="editor_save_palette">Save Palette</string>
-    <string name="editor_harmony_result">Current harmony</string>
-    <string name="builder_empty_title">Start with a capture</string>
-    <string name="builder_empty_body">Capture a frame first, or open a saved study from the library to begin editing.</string>
-    <string name="builder_empty_primary">Go to live camera</string>
-    <string name="builder_empty_secondary">Browse library</string>
-    <string name="builder_source_label">Source</string>
-    <string name="settings_section_capture">Capture</string>
     <string name="settings_section_about">About</string>
-    <string name="settings_capture_grid">Always show reticle</string>
-    <string name="settings_capture_flash">Flash preference</string>
     <string name="settings_capture_flash_unavailable">Flash is unavailable on the active camera.</string>
-    <string name="settings_capture_haptics">Haptic feedback</string>
-    <string name="settings_about_version">Version 1.0 Atelier</string>
-    <string name="add_to_palette">Add to Palette</string>
-    <string name="saved_palettes">Saved Palettes</string>
+    <string name="settings_about_version">Version %1$s</string>
     <string name="source_live_camera">Live Camera</string>
+    <string name="source_gallery_import">Gallery import</string>
     <string name="source_sampled_capture">Sampled from %1$s</string>
     <string name="source_harmony_study">Harmony Study</string>
-    <string name="capture_color_label">Capture</string>
-    <string name="camera_control_flip">Flip camera</string>
-    <string name="camera_control_flash">Flash</string>
-    <string name="camera_control_grid">Grid</string>
-    <string name="camera_control_on">%1$s on</string>
-    <string name="camera_control_off">%1$s off</string>
-    <string name="camera_control_unavailable">%1$s unavailable</string>
-    <string name="open_library">Open library</string>
-    <string name="open_settings">Open settings</string>
-    <string name="bottom_nav_library">Go to library</string>
-    <string name="bottom_nav_builder">Go to builder</string>
-    <string name="bottom_nav_live">Go to live camera</string>
-    <string name="bottom_nav_capture">Capture palette</string>
-    <string name="bottom_nav_history">Go to capture history</string>
-    <string name="bottom_nav_settings">Go to settings</string>
-    <string name="selected_state">Selected</string>
-    <string name="not_selected_state">Not selected</string>
-    <string name="swatch_state">Color %1$s</string>
-    <string name="capture_button">Capture palette from camera</string>
+    <string name="source_saved_color">Saved Color</string>
     <string name="back_to_app">Back</string>
-    <string name="copy_hex">Copy HEX value</string>
-    <string name="history_title">Capture History</string>
-    <string name="history_body">Reopen earlier captures or return to the builder to continue refining them.</string>
-    <string name="history_empty">No captured studies yet. Capture a scene to start building a history.</string>
     <string name="settings_title">Settings</string>
-    <string name="settings_body">Capture behavior and feedback are tuned here for your current device.</string>
-    <string name="live_palette_title">Current Palette</string>
-    <string name="live_palette_body">Captured palettes can be resampled, refined, and sent to the builder.</string>
-    <string name="live_palette_waiting">Capture a frame to build the current palette.</string>
-    <string name="live_palette_waiting_body">Once captured, your sampled colors and harmony study will appear here.</string>
     <string name="harmony_analogous">Analogous Study</string>
     <string name="harmony_complementary">Complementary Study</string>
     <string name="harmony_tonal">Tonal Study</string>
@@ -118,118 +63,115 @@
     <string name="palette_shade_1">Shade 1</string>
     <string name="palette_shade_2">Shade 2</string>
     <string name="current_palette_source">Current Palette</string>
-    <string name="builder_palette_source">Palette Builder</string>
     <string name="capture_name">Capture %1$s</string>
-    <string name="capture_meta">%1$s · %2$s</string>
-    <string name="history_section_latest">LATEST</string>
-    <string name="history_section_archive">SESSION</string>
 
     <!-- Live Camera Empty / Waiting States -->
-    <string name="live_empty_hint">Tap capture to sample colors from the scene</string>
-    <string name="live_empty_teaser_tag">PREVIEW</string>
-    <string name="live_empty_teaser_title">Your palette awaits</string>
-    <string name="live_empty_teaser_body">Point the camera at anything colorful and tap the shutter to extract a study.</string>
-    <string name="live_tip_dismiss">Got it</string>
 
     <!-- Capture Transition -->
-    <string name="capture_transition_analyzing">Analyzing Colors…</string>
-    <string name="capture_transition_extracting">Extracting swatches…</string>
 
     <!-- Color Detail -->
-    <string name="detail_related_colors">Related Colors</string>
-    <string name="detail_tints">Tints</string>
-    <string name="detail_shades">Shades</string>
-    <string name="detail_tones">Tones</string>
-    <string name="detail_copy_rgb">Copy RGB</string>
-    <string name="detail_copy_cmyk">Copy CMYK</string>
-    <string name="detail_copy_hsl">Copy HSL</string>
-    <string name="detail_copy_hsv">Copy HSV</string>
-    <string name="detail_swipe_hint">Swipe left or right to browse palette</string>
-    <string name="detail_color_name_guess">Closest named color</string>
-    <string name="detail_add_to_palette">Add to Palette</string>
-    <string name="detail_remove_from_palette">Remove</string>
 
     <!-- Palette Editor -->
-    <string name="editor_drag_hint">Hold and drag to reorder</string>
-    <string name="editor_delete">Delete</string>
-    <string name="editor_duplicate">Duplicate</string>
-    <string name="editor_edit_color">Edit Color</string>
-    <string name="editor_palette_stats">Palette Stats</string>
-    <string name="editor_stat_saturation">Avg. Saturation</string>
-    <string name="editor_stat_warmth">Warmth</string>
-    <string name="editor_stat_contrast">Contrast</string>
-    <string name="editor_warm">Warm</string>
-    <string name="editor_cool">Cool</string>
-    <string name="editor_neutral">Neutral</string>
     <string name="editor_color_picker_title">Adjust Color</string>
     <string name="editor_color_picker_done">Done</string>
 
     <!-- Palette Library -->
-    <string name="library_search_hint">Search palettes…</string>
     <string name="library_filter_all">All</string>
     <string name="library_filter_camera">Camera</string>
     <string name="library_filter_harmony">Harmony</string>
     <string name="library_filter_saved">Saved</string>
-    <string name="library_sort_recent">Recent</string>
-    <string name="library_sort_name">Name</string>
-    <string name="library_sort_colors">Color count</string>
-    <string name="library_sort_warm">Warmest</string>
-    <string name="library_sort_cool">Coolest</string>
-    <string name="library_folder_default">All Studies</string>
-    <string name="library_folder_favorites">Favorites</string>
-    <string name="library_folder_brand">Brand Colors</string>
-    <string name="library_folder_inspiration">Inspiration</string>
-    <string name="library_swipe_deleted">Palette deleted</string>
-    <string name="library_undo">Undo</string>
-    <string name="library_favorite">Favorite</string>
-    <string name="library_unfavorite">Unfavorite</string>
     <string name="library_empty_search">No palettes match your search.</string>
 
     <!-- Share & Export -->
-    <string name="share_palette_title">Share Palette</string>
     <string name="share_as_image">Share as Image</string>
     <string name="copy_all_hex">Copy All HEX</string>
     <string name="export_format_css">CSS Variables</string>
     <string name="export_format_swift">Swift UIColor</string>
     <string name="export_format_android">Android ColorRes</string>
     <string name="export_format_figma">Figma JSON</string>
-    <string name="export_copied">Format copied to clipboard</string>
-
-    <!-- Onboarding -->
-    <string name="onboarding_page1_title">Point &amp; Capture</string>
-    <string name="onboarding_page1_body">Aim your camera at any scene and tap the shutter. Campalette extracts a harmonious palette in under a second.</string>
-    <string name="onboarding_page2_title">Tap to Sample</string>
-    <string name="onboarding_page2_body">Tap anywhere on a captured image to sample a single color. Long-press to explore a radial menu of related hues.</string>
-    <string name="onboarding_page3_title">Save &amp; Share</string>
-    <string name="onboarding_page3_body">Refine palettes in the builder, save them to your library, and export as images or code for your projects.</string>
-    <string name="onboarding_skip">Skip</string>
-    <string name="onboarding_next">Next</string>
-    <string name="onboarding_finish">Get Started</string>
-    <string name="onboarding_indicator">Onboarding step %1$d of %2$d</string>
 
     <!-- Settings -->
-    <string name="settings_section_theme">Theme</string>
-    <string name="settings_section_accessibility">Accessibility</string>
-    <string name="settings_theme_preview">Current Theme</string>
-    <string name="settings_reset_theme">Reset to Default</string>
-    <string name="settings_high_contrast">High contrast mode</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_appearance_mode">App appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_appearance_description">System follows your device appearance. Palette accent tints selected controls with colors from the active palette.</string>
     <string name="settings_reduced_motion">Reduce motion</string>
-    <string name="settings_large_touch">Larger touch targets</string>
-    <string name="settings_camera_quality">Capture quality</string>
-    <string name="settings_quality_high">High</string>
-    <string name="settings_quality_medium">Medium</string>
-    <string name="settings_quality_low">Low</string>
+    <string name="settings_capture">Capture</string>
+    <string name="settings_palette_size">Palette size</string>
+    <string name="settings_palette_size_description">Choose how many colors Campalette pulls out of a photo when you capture or import it.</string>
+    <string name="settings_palette_size_decrease">Fewer colors</string>
+    <string name="settings_palette_size_increase">More colors</string>
+    <string name="settings_palette_size_value">%1$d colors</string>
     <string name="settings_about_credits">Design system: Atelier. Built with Jetpack Compose &amp; CameraX.</string>
-    <string name="settings_about_licenses">Open Source Licenses</string>
+    <string name="settings_privacy_policy">Privacy policy</string>
+    <string name="settings_privacy_policy_error">Could not open the privacy policy.</string>
+    <string name="privacy_policy_url" translatable="false">https://github.com/vishnu-17o7/campalette/blob/main/PRIVACY.md</string>
+    <string name="settings_terms">Terms of use</string>
+    <string name="settings_terms_error">Could not open the terms of use.</string>
+    <string name="terms_url" translatable="false">https://github.com/vishnu-17o7/campalette/blob/main/EULA.md</string>
+    <string name="share_palette_chooser">Share palette</string>
+    <string name="share_palette_default_title">Campalette palette</string>
+    <string name="share_palette_error">Could not share this palette.</string>
+    <string name="gallery_import_error">Could not import that image.</string>
+    <string name="library_title">Library</string>
+    <string name="bottom_nav_library">Library</string>
+    <string name="bottom_nav_camera">Camera</string>
+    <string name="bottom_nav_settings">Settings</string>
+    <string name="library_search_placeholder">Search palettes or hex</string>
+    <string name="library_toggle_view">Toggle library view</string>
+    <string name="library_empty_title">No palettes yet</string>
+    <string name="library_empty_body">Capture a scene or import a photo. Your palettes will appear here.</string>
+    <string name="library_empty_search_body">Try a different palette name or hex value.</string>
+    <string name="library_capture_action">Capture colors</string>
+    <string name="library_unnamed_palette">Unnamed palette</string>
+    <plurals name="library_color_count">
+        <item quantity="one">%d color</item>
+        <item quantity="other">%d colors</item>
+    </plurals>
+    <string name="library_select_palette">Select a palette to view details</string>
+    <string name="library_captured_via">Captured via %1$s</string>
+    <string name="library_save_again">Save palette again</string>
+    <string name="library_edit_palette">Edit palette</string>
+    <string name="label_colors">Colors</string>
+    <string name="label_warmth">Warmth</string>
+    <string name="label_contrast">Contrast</string>
+    <string name="label_saturation">Saturation</string>
+    <string name="label_swatches">Swatches</string>
+    <string name="editor_empty_title">No palette to edit</string>
+    <string name="editor_empty_body">Capture a new palette or open one from your library to start editing.</string>
+    <string name="editor_open_camera">Open camera</string>
+    <string name="editor_browse_library">Browse library</string>
+    <string name="editor_title">Edit palette</string>
+    <string name="editor_share">Share palette</string>
+    <string name="editor_save">Save</string>
+    <string name="editor_palette_name">Palette name</string>
+    <string name="editor_palette_name_hint">Give this palette a name</string>
+    <string name="editor_harmony">Harmony</string>
+    <string name="harmony_analogous_short">Analogous</string>
+    <string name="harmony_complement_short">Complement</string>
+    <string name="harmony_tonal_short">Tonal</string>
+    <string name="editor_selected_seed">Selected harmony seed</string>
+    <string name="color_picker_cancel">Cancel</string>
+    <string name="color_picker_apply">Apply</string>
+    <string name="color_picker_hue">Hue</string>
+    <string name="color_picker_saturation">Saturation</string>
+    <string name="color_picker_value">Value (Brightness)</string>
+    <string name="settings_interaction">Interaction</string>
+    <string name="settings_palette_accent">Palette accent</string>
+    <string name="settings_haptics">Haptics</string>
+    <string name="toggle_state_on">On</string>
+    <string name="toggle_state_off">Off</string>
+    <string name="settings_interaction_description">Use quieter transitions or turn off tactile confirmation.</string>
+    <string name="permission_title">Capture colors around you</string>
+    <string name="permission_body">Camera access lets Campalette sample a scene and build a reusable palette. Photos stay on this device.</string>
+    <string name="permission_allow_camera">Allow camera access</string>
+    <string name="permission_import_gallery">Import a photo instead</string>
 
     <!-- Bottom Nav -->
-    <string name="bottom_nav_badge_new">New captures</string>
-    <string name="bottom_nav_quick_import">Import from Gallery</string>
-    <string name="bottom_nav_quick_empty">Create Empty Palette</string>
 
     <!-- Radial Menu -->
-    <string name="radial_menu_hint">Tap a segment to select</string>
-    <string name="radial_menu_center">Touched color</string>
 
     <!-- Color Blindness -->
     <string name="colorblind_title">Color Vision Preview</string>
@@ -237,16 +179,50 @@
     <string name="colorblind_deuteranopia">Deuteranopia</string>
     <string name="colorblind_tritanopia">Tritanopia</string>
     <string name="colorblind_warning">Two colors may be indistinguishable under this condition.</string>
-    <string name="colorblind_simulate">Simulate</string>
 
-    <!-- Gallery Picker -->
-    <string name="gallery_picker_title">Choose an Image</string>
-    <string name="gallery_import_button">Import from Gallery</string>
-    <string name="gallery_crop_rotate">Crop &amp; Rotate</string>
-    <string name="gallery_confirm">Import Palette</string>
+    <!-- Actions -->
+    <string name="undo">Undo</string>
+    <string name="palette_deleted">Palette deleted</string>
+    <string name="color_removed">Color removed</string>
+    <string name="copy">Copy</string>
+    <string name="clear_search">Clear search</string>
+    <string name="favorite">Favorite</string>
+    <string name="swatch_state_selected">Selected</string>
+    <string name="swatch_state_not_selected">Not selected</string>
+    <string name="color_swatch">Color swatch</string>
+    <string name="color_named">Color %1$s</string>
 
-    <!-- Tablet / Large Screen -->
-    <string name="tablet_pane_library">Library</string>
-    <string name="tablet_pane_editor">Editor</string>
-    <string name="tablet_pane_settings">Settings</string>
+    <!-- Live camera -->
+    <string name="captured_image">Captured image</string>
+    <string name="clear_capture">Clear capture</string>
+    <string name="import_photo">Import photo</string>
+    <string name="open_library">Open library</string>
+    <string name="toggle_flash">Toggle flash</string>
+    <string name="toggle_grid">Toggle grid</string>
+    <string name="flip_camera">Flip camera</string>
+    <string name="finding_colors">Finding colors</string>
+    <string name="live_palette">Live palette</string>
+    <string name="tap_to_inspect">Tap to inspect</string>
+    <string name="retake">Retake</string>
+    <string name="live_sampling">Live</string>
+    <string name="capture_photo">Capture photo</string>
+
+    <!-- Color detail -->
+    <string name="color_values">Color values</string>
+    <string name="format_hex">Hex</string>
+    <string name="format_rgb">RGB</string>
+    <string name="format_hsl">HSL</string>
+    <string name="tints">Tints</string>
+    <string name="shades">Shades</string>
+    <string name="add_to_palette">Add to palette</string>
+    <string name="color_vision">Color vision</string>
+    <string name="remove_from_palette">Remove from palette</string>
+    <string name="copy_hex">Copy hex value</string>
+
+    <!-- Sheets -->
+    <string name="export_palette">Export palette</string>
+    <string name="copy_for">Copy for</string>
+    <string name="close_export_sheet">Close export sheet</string>
+    <string name="close_color_vision">Close preview</string>
+    <string name="colorblind_original">Original</string>
 </resources>

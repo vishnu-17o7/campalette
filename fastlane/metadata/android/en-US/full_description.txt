@@ -1,0 +1,19 @@
+Campalette turns the colors around you into palettes you can refine, save, and reuse.
+
+Point the camera at a scene or choose a photo, then extract a balanced color study in seconds. Tap a captured image to sample an exact color, explore related harmonies, and shape the result in a focused palette editor.
+
+Built for designers, artists, developers, and photographers:
+
+- Capture palettes from the live camera
+- Import a specific image with Android's privacy-friendly photo picker
+- Sample individual colors from captured scenes
+- Build analogous, complementary, and tonal harmonies
+- Reorder, remove, and inspect palette colors
+- Preview colors for common color-vision differences
+- Save palettes locally for later
+- Share a clean palette image
+- Copy HEX values or export CSS, Swift, Android XML, and Figma JSON
+- Choose light, dark, or system appearance
+- Reduce motion or disable haptic feedback
+
+Campalette is offline-first. Camera frames and selected photos are processed on your device. The app contains no accounts, ads, or analytics.

@@ -1,0 +1,5 @@
+Initial public release:
+- Capture and import color palettes
+- Refine harmonies in the palette editor
+- Save, inspect, and export colors
+- Light, dark, accessibility, and tablet support

@@ -1,0 +1,3 @@
+# Optional Fastlane Supply config. Binary uploads still use the Gradle bundle.
+json_key_file("") # Play Developer API service-account JSON, kept out of git
+package_name("com.vishnu.campalette")
