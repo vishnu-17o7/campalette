@@ -1,11 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="atelier_primary">#004743</color>
-    <color name="atelier_on_primary">#ffffff</color>
-    <color name="atelier_primary_container">#1f5f5b</color>
-    <color name="atelier_on_primary_container">#99d7d1</color>
-    <color name="atelier_surface">#fdf9f4</color>
-    <color name="atelier_surface_low">#f7f3ee</color>
-    <color name="atelier_surface_lowest">#ffffff</color>
     <color name="atelier_background">#fdf9f4</color>
 </resources>

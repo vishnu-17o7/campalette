@@ -1,110 +1,84 @@
-# Building the App
+# Build guide
 
-## Important Note about Build Environment
+## Requirements
 
-This project requires access to Google's Android Maven repository (dl.google.com) to download Android Gradle Plugin and related dependencies. If you're in an environment where this domain is blocked, you have several options:
+- JDK 17
+- Android SDK 36
+- Android Studio or the checked-in Gradle wrapper
 
-### Option 1: Build in Android Studio (Recommended)
+Set the Android SDK path in `local.properties` when Android Studio has not created it:
 
-1. Install [Android Studio](https://developer.android.com/studio)
-2. Clone the repository
-3. Open the project in Android Studio
-4. Android Studio will automatically download dependencies
-5. Click "Build" > "Make Project" or run on device/emulator
-
-### Option 2: Use a Mirror Repository
-
-If dl.google.com is blocked, you can configure a mirror repository by editing `settings.gradle.kts`:
-
-```kotlin
-pluginManagement {
-    repositories {
-        // Add mirror repositories here if needed
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
-        maven { url = uri("https://maven.aliyun.com/repository/central") }
-        gradlePluginPortal()
-        google()
-        mavenCentral()
-    }
-}
-
-dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-    repositories {
-        // Add mirror repositories here if needed
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
-        maven { url = uri("https://maven.aliyun.com/repository/central") }
-        google()
-        mavenCentral()
-    }
-}
+```properties
+sdk.dir=C\:\\Users\\you\\AppData\\Local\\Android\\Sdk
 ```
 
-### Option 3: Command Line Build
+Keep `local.properties` out of version control.
+
+## Debug build
+
+Windows:
+
+```powershell
+.\gradlew.bat :app:assembleDebug --no-daemon
+```
+
+macOS or Linux:
 
 ```bash
-# Ensure you have JDK 17+ installed
-./gradlew assembleDebug
-
-# Or for release build
-./gradlew assembleRelease
-
-# To install on connected device
-./gradlew installDebug
+./gradlew :app:assembleDebug --no-daemon
 ```
 
-## System Requirements
+Output: `app/build/outputs/apk/debug/app-debug.apk`
 
-- **JDK**: 17 or higher
-- **Android SDK**: 34
-- **Gradle**: 8.2 (included via wrapper)
-- **Operating System**: Windows, macOS, or Linux
+Install the debug build on a connected device:
 
-## Build Output
-
-The APK will be generated at:
-```
-app/build/outputs/apk/debug/app-debug.apk
+```powershell
+.\gradlew.bat :app:installDebug
 ```
 
-## Testing on Device
+## Verification
 
-1. Enable Developer Options on your Android device
-2. Enable USB Debugging
-3. Connect your device via USB
-4. Run: `./gradlew installDebug`
-5. The app will install and you can launch it from your device
+```powershell
+.\gradlew.bat :app:testDebugUnitTest :app:lintDebug --no-daemon
+```
 
-## Testing on Emulator
+Run instrumentation tests with an emulator or device attached:
 
-1. Create an AVD (Android Virtual Device) in Android Studio
-2. Ensure the emulator has camera support enabled
-3. Run the app from Android Studio or via `./gradlew installDebug`
+```powershell
+.\gradlew.bat :app:connectedDebugAndroidTest --no-daemon
+```
+
+## Release bundle
+
+Create the local upload key once with `.\scripts\create-upload-keystore.ps1` (or `./scripts/create-upload-keystore.sh`). That writes gitignored `release/campalette-upload.jks` and `keystore.properties`. Use the guarded task below for anything intended for Play: it fails when the keystore is missing, incomplete, or the generated bundle does not carry a verifiable JAR signature.
+
+```powershell
+.\gradlew.bat clean :app:testDebugUnitTest :app:lintRelease :app:signedBundleRelease --no-daemon
+```
+
+Output: `app/build/outputs/bundle/release/app-release.aab`
+
+To verify release compilation without an owner key, use `:app:assembleRelease`. That task produces an unsigned APK for local inspection and must not be uploaded.
+
+Release builds target API 36, enable R8, and remove unused resources. Follow [PUBLISHING.md](PUBLISHING.md) before uploading a bundle.
+
+## Continuous integration
+
+`.github/workflows/android.yml` verifies the Gradle wrapper and runs unit tests, release lint, debug compilation, and an R8-enabled release compile on every pull request and push to `main`. Signing credentials are intentionally excluded from pull-request CI.
+
+## Benchmark build
+
+The `benchmark` module contains startup, scroll, and baseline-profile journeys. It needs a connected emulator or physical device:
+
+```powershell
+.\gradlew.bat :app:generateBaselineProfile --no-daemon
+```
+
+The benchmark variant uses the debug signing key and must not be uploaded to Google Play.
 
 ## Troubleshooting
 
-### "Could not resolve com.android.tools.build:gradle"
-- Check internet connection
-- Verify you can access dl.google.com
-- Try using a mirror repository (see Option 2 above)
-
-### "SDK location not found"
-Create a `local.properties` file in the project root:
-```
-sdk.dir=/path/to/your/android/sdk
-```
-
-### Camera not working in emulator
-- Ensure the AVD has "Webcam" configured for camera
-- Grant camera permissions when prompted
-- Some emulators may have limited camera support
-
-## Build Variants
-
-The app supports two build variants:
-- **debug**: For development and testing
-- **release**: For production (requires signing configuration)
-
-## Next Steps
-
-After building, refer to [ARCHITECTURE.md](ARCHITECTURE.md) for implementation details.
+- Dependency downloads require access to Google's Maven repository and Maven Central.
+- Run `adb devices` when Gradle cannot find a target device.
+- Wait for `adb shell getprop sys.boot_completed` to return `1` before installing on a newly started emulator.
+- Check camera permission and the AVD camera source when the preview does not start.

@@ -1,340 +1,111 @@
-# Architecture & Implementation Details
+# Campalette architecture
 
-## Overview
+Campalette is a single-activity, offline-first Android app built with Kotlin, Jetpack Compose, CameraX, and AndroidX Palette.
 
-Campalette is built using modern Android development practices with Jetpack Compose, following the Material 3 design system.
+## Runtime structure
 
-## Technology Stack
-
-### Core Technologies
-- **Kotlin**: Primary programming language
-- **Jetpack Compose**: Modern declarative UI framework
-- **Material 3**: Latest Material Design guidelines
-- **CameraX**: Modern camera API
-- **AndroidX Palette**: Color extraction library
-
-### Architecture Pattern
-- **Single Activity**: Uses a single `MainActivity` with Compose
-- **Unidirectional Data Flow**: State flows down, events flow up
-- **Compose State Management**: Uses `remember` and `mutableStateOf`
-
-## Component Breakdown
-
-### 1. MainActivity.kt
-
-The main entry point that orchestrates the entire app.
-
-#### Key Responsibilities:
-- **Permission Management**: Handles camera permission requests
-- **Camera Lifecycle**: Manages CameraX lifecycle with lifecycle owner
-- **State Management**: Maintains UI state for captured images and color palettes
-- **UI Composition**: Composes all UI elements
-
-#### Important Functions:
-
-**CameraScreen()**
-```kotlin
-@Composable
-fun CameraScreen() {
-    // Manages overall screen layout
-    // 60% camera preview, 40% color palette
-    Column {
-        Box(weight = 0.6f) { CameraPreview(...) }
-        Box(weight = 0.6f) { ColorPaletteDisplay(...) }
-    }
-}
-```
-
-**CameraPreview()**
-```kotlin
-@Composable
-fun CameraPreview(onImageCaptured: (Bitmap) -> Unit) {
-    // Uses AndroidView to embed native Preview
-    // Configures CameraX with:
-    // - Preview use case
-    // - ImageCapture use case
-    // - Back camera selector
-}
-```
-
-**extractColorPalette()**
-```kotlin
-private fun extractColorPalette(bitmap: Bitmap): List<PaletteColor> {
-    // Uses Palette.Builder
-    // Extracts 7 types of color swatches
-    // Returns list of PaletteColor data class
-}
-```
-
-### 2. UI Theme System
-
-Located in `ui/theme/` package:
-
-#### Color.kt
-- Defines Material 3 color tokens
-- Separate light and dark theme colors
-- Uses proper M3 color roles (primary, secondary, tertiary, etc.)
-
-#### Theme.kt
-- Composes the complete Material 3 theme
-- Implements dynamic color for Android 12+
-- Falls back to static colors for older versions
-- Manages status bar appearance
-
-#### Type.kt
-- Defines typography scale
-- Uses Material 3 type tokens
-- Configures font families and styles
-
-## Data Flow
-
-```
-User Action (Take Photo)
-    ↓
-CameraPreview captures image
-    ↓
-ImageProxy → Bitmap conversion
-    ↓
-extractColorPalette(bitmap)
-    ↓
-Palette.Builder.generate()
-    ↓
-Extract color swatches
-    ↓
-Update colorPalette state
-    ↓
-ColorPaletteDisplay recomposes
-    ↓
-Show color cards to user
-```
-
-## CameraX Integration
-
-### Use Cases
-1. **Preview**: Live camera feed
-   ```kotlin
-   Preview.Builder().build().also {
-       it.setSurfaceProvider(previewView.surfaceProvider)
-   }
-   ```
-
-2. **ImageCapture**: Taking photos
-   ```kotlin
-   ImageCapture.Builder()
-       .setCaptureMode(CAPTURE_MODE_MINIMIZE_LATENCY)
-       .build()
-   ```
-
-### Image Processing Pipeline
-```
-ImageProxy (YUV format)
-    ↓
-Extract first plane buffer
-    ↓
-BitmapFactory.decodeByteArray()
-    ↓
-Apply rotation correction
-    ↓
-Return RGBA Bitmap
-```
-
-## Color Palette Extraction
-
-### Palette API Usage
-```kotlin
-val palette = Palette.from(bitmap).generate()
-```
-
-### Extracted Swatches
-1. **Dominant**: Most common color
-2. **Vibrant**: Saturated, bold color
-3. **Muted**: Subdued color
-4. **Light Vibrant**: Light, vivid color
-5. **Dark Vibrant**: Dark, vivid color
-6. **Light Muted**: Light, subdued color
-7. **Dark Muted**: Dark, subdued color
-
-### Swatch Properties
-Each swatch provides:
-- `rgb`: Color as integer
-- `population`: Number of pixels
-- `titleTextColor`: Contrasting text color
-- `bodyTextColor`: Body text color
-
-## Material 3 Implementation
-
-### Color Roles
-- **Primary**: Main brand color (#6750A4)
-- **Secondary**: Accent color (#625B71)
-- **Tertiary**: Additional accent (#7D5260)
-- **Error**: Error states (#B3261E)
-- **Background/Surface**: Canvas colors
-
-### Dynamic Color (Android 12+)
-```kotlin
-when {
-    dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-        if (darkTheme) dynamicDarkColorScheme(context) 
-        else dynamicLightColorScheme(context)
-    }
-    darkTheme -> DarkColorScheme
-    else -> LightColorScheme
-}
-```
-
-### Component Elevation
-```kotlin
-Card(
-    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-)
-```
-
-### Shape System
-```kotlin
-RoundedCornerShape(12.dp)  // Cards
-RoundedCornerShape(8.dp)   // Color swatches
-```
-
-## State Management
-
-### Composition Local State
-```kotlin
-var hasCameraPermission by remember { mutableStateOf(...) }
-var capturedImage by remember { mutableStateOf<Bitmap?>(null) }
-var colorPalette by remember { mutableStateOf<List<PaletteColor>>(emptyList()) }
-```
-
-### State Updates
-- Permission state updates trigger permission UI
-- Image capture updates palette extraction
-- Palette update triggers UI recomposition
-
-## Permission Handling
-
-### Runtime Permissions
-```kotlin
-private val requestPermissionLauncher = registerForActivityResult(
-    ActivityResultContracts.RequestPermission()
-) { isGranted: Boolean ->
-    if (isGranted) recreate()
-}
-```
-
-### Permission Check
-```kotlin
-ContextCompat.checkSelfPermission(
-    context,
-    Manifest.permission.CAMERA
-) == PackageManager.PERMISSION_GRANTED
-```
-
-## Threading
-
-### CameraX Executor
-```kotlin
-private lateinit var cameraExecutor: ExecutorService
-
-override fun onCreate(savedInstanceState: Bundle?) {
-    cameraExecutor = Executors.newSingleThreadExecutor()
-}
-
-override fun onDestroy() {
-    cameraExecutor.shutdown()
-}
-```
-
-### Image Capture Callback
-Runs on background thread, safe for processing:
-```kotlin
-capture.takePicture(
-    cameraExecutor,
-    object : ImageCapture.OnImageCapturedCallback() {
-        override fun onCaptureSuccess(image: ImageProxy) {
-            // Runs on executor thread
-        }
-    }
-)
-```
-
-## UI Layout Structure
-
-```
+```text
 MainActivity
-└── CampaletteTheme
-    └── Surface
-        └── CameraScreen
-            ├── Column (fillMaxSize)
-            │   ├── Box (weight 0.6) - Camera
-            │   │   └── CameraPreview
-            │   │       ├── AndroidView (PreviewView)
-            │   │       └── FloatingActionButton
-            │   └── Box (weight 0.4) - Palette
-            │       └── ColorPaletteDisplay
-            │           └── LazyColumn
-            │               └── ColorCard (for each color)
+  CampaletteTheme
+    AppShell
+      PaletteViewModel
+        CampaletteRepository
+      SettingsViewModel
+        CampaletteRepository
+      Camera, library, editor, detail, settings, and export composables
 ```
 
-## Performance Considerations
+`MainActivity` owns the camera executor and hosts Compose. `AppShell` coordinates root navigation, overlays, camera permission, gallery import, bitmap ownership, and transient feedback.
 
-1. **Lazy Loading**: Uses LazyColumn for color list
-2. **Efficient Recomposition**: Minimal state dependencies
-3. **Background Processing**: Image processing on executor thread
-4. **Image Rotation**: Handled efficiently with Matrix
-5. **Memory Management**: ImageProxy.close() after processing
+The app has three root destinations:
 
-## Security
+- Library
+- Camera
+- Settings
 
-1. **Permission Requests**: Proper runtime permission handling
-2. **No External Storage**: Works with in-memory bitmaps
-3. **No Network Access**: Fully offline app
-4. **No Data Collection**: No analytics or tracking
+The editor is a pushed workflow. Color detail, color-vision preview, and export preserve the current workspace as overlays.
 
-## Accessibility
+## State
 
-1. **Material 3 Components**: Built-in accessibility support
-2. **High Contrast**: Proper color contrast ratios
-3. **Touch Targets**: Minimum 48dp touch targets
-4. **Screen Reader**: Semantic content descriptions
+`PaletteViewModel` owns:
 
-## Testing Recommendations
+- The current palette, name, source, selected color, and harmony mode
+- Saved palettes and capture history
+- Library search, filter, and layout controls
+- Persistence ordering for palette mutations
 
-### Unit Tests
-- Color extraction logic
-- Bitmap conversion
-- Hex code formatting
+The ViewModel stores the active workspace and library controls in `SavedStateHandle`. A configuration change can restore palette work without retaining the source bitmap.
 
-### UI Tests
-- Permission flow
-- Camera preview appearance
-- Capture button interaction
-- Color palette display
+`SettingsViewModel` owns appearance, palette accent, reduced motion, and haptic preferences. It applies changes optimistically and serializes disk writes.
 
-### Integration Tests
-- End-to-end capture flow
-- Theme switching
-- State persistence
+## Persistence
 
-## Future Enhancements
+`CampaletteRepository` is the single disk boundary. It stores compact JSON and settings in the private `campalette` SharedPreferences file.
 
-### Planned Features
-1. **Palette Export**: Save as image or share
-2. **Gallery Picker**: Select existing images
-3. **Color Clipboard**: Copy hex codes
-4. **Custom Names**: Edit color names
-5. **Palette History**: Save favorite palettes
-6. **ML Integration**: Smart color naming with ML
-7. **Accessibility**: Enhanced accessibility features
+- Disk reads and writes run off the main thread.
+- A mutex preserves write ordering.
+- Capture history keeps the newest 100 unique entries.
+- Saved palettes remain user-controlled and are not capped.
+- Android backup and device transfer include only this preferences file.
 
-### Technical Debt
-1. Add repository pattern for future data persistence
-2. Implement ViewModel for better state management
-3. Add dependency injection (Hilt/Koin)
-4. Create separate modules for features
-5. Add comprehensive test coverage
+The app does not persist camera frames or imported photos.
 
-## Resources
+## Camera and image import
 
-- [Jetpack Compose](https://developer.android.com/jetpack/compose)
-- [Material 3](https://m3.material.io/)
-- [CameraX](https://developer.android.com/training/camerax)
-- [Palette API](https://developer.android.com/training/material/palette-colors)
+`CameraPreview` binds Preview and ImageCapture use cases to the current lifecycle. It exposes a downscaled reusable sample buffer for tap and long-press sampling.
+
+Capture flow:
+
+```text
+CameraX ImageProxy
+  -> Bitmap conversion and rotation
+  -> Downscale to 1080 px maximum dimension
+  -> AndroidX Palette extraction
+  -> Palette workspace and capture history
+```
+
+Gallery import uses `PickVisualMedia`. Android grants access only to the selected image and falls back to the system document picker on older devices.
+
+Bitmap work runs outside the main thread. `AppShell` owns the displayed bitmap and recycles it when the capture changes or the composable leaves composition.
+
+## Sharing and export
+
+Palette image generation runs on a background dispatcher. The app writes the PNG to `cache/shared_images`, exposes that one file through a non-exported `FileProvider`, and grants temporary read access to the selected share target.
+
+Text export supports:
+
+- HEX lists
+- CSS custom properties
+- Swift `UIColor`
+- Android color resources
+- Valid JSON for Figma-oriented workflows
+
+## UI and accessibility
+
+The Compose theme defines light and dark color schemes, Manrope typography, shapes, and an optional palette-derived accent. `LocalReducedMotion` lets transitions replace spatial motion with immediate fades.
+
+Shared components provide:
+
+- Minimum touch targets
+- Selected-state semantics
+- Explicit descriptions for action icons
+- Adaptive phone and tablet layouts
+- Camera chrome with controlled contrast over live content
+
+Product behavior and visual rules live in [PRODUCT.md](PRODUCT.md) and [DESIGN.md](DESIGN.md).
+
+## Build and performance
+
+The app compiles against and targets API 36 with a minimum SDK of 24. Release builds use R8 and resource shrinking.
+
+The `benchmark` module covers cold startup, library scrolling, and baseline-profile journeys. The app build also includes the AndroidX profile installer.
+
+Run the standard verification set:
+
+```powershell
+.\gradlew.bat :app:assembleDebug :app:testDebugUnitTest :app:lintDebug --no-daemon
+.\gradlew.bat :app:connectedDebugAndroidTest --no-daemon
+.\gradlew.bat :app:lintRelease :app:signedBundleRelease --no-daemon
+```
+
+See [BUILD.md](BUILD.md) and [PUBLISHING.md](PUBLISHING.md) for environment and release details.

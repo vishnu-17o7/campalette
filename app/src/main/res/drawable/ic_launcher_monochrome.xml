@@ -4,22 +4,32 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- One-color silhouette for Android 13+ themed icons. -->
     <path
-        android:fillColor="#00000000"
-        android:pathData="M68.58,37.27 A25,25 0,1 0,68.58 70.73"
-        android:strokeColor="#FFFFFFFF"
-        android:strokeLineCap="round"
-        android:strokeWidth="9" />
+        android:pathData="M70.96,81.14 A32,32 0 1 1 70.96,26.86 L66.45,34.08 A23.5,23.5 0 1 0 66.45,73.92 Z"
+        android:fillColor="#000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="1.3"
+        android:strokeLineJoin="round" />
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M50,47.5 A6.5,6.5 0,1 1,50 60.5 A6.5,6.5 0,1 1,50 47.5" />
+        android:pathData="M74.57,29.48 A32,32 0 0 1 84.08,43.06 L76.08,45.96 A23.5,23.5 0 0 0 69.10,36.00 Z"
+        android:fillColor="#000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="1.3"
+        android:strokeLineJoin="round" />
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M75,38 H79 Q81,38 81,40 V44 Q81,46 79,46 H75 Q73,46 73,44 V40 Q73,38 75,38 Z" />
+        android:pathData="M85.31,47.35 A32,32 0 1 1 85.31,60.65 L76.98,58.89 A23.5,23.5 0 0 0 76.98,49.12 Z"
+        android:fillColor="#000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="1.3"
+        android:strokeLineJoin="round" />
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M75,50 H79 Q81,50 81,52 V56 Q81,58 79,58 H75 Q73,58 73,56 V52 Q73,50 75,50 Z" />
+        android:pathData="M84.08,64.95 A32,32 0 0 1 74.57,78.52 L69.10,72.00 A23.5,23.5 0 0 0 76.08,62.04 Z"
+        android:fillColor="#000000"
+        android:strokeColor="#000000"
+        android:strokeWidth="1.3"
+        android:strokeLineJoin="round" />
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M75,62 H79 Q81,62 81,64 V68 Q81,70 79,70 H75 Q73,70 73,68 V64 Q73,62 75,62 Z" />
+        android:pathData="M74.90,54 A20.90,20.90 0 1 1 33.10,54 A20.90,20.90 0 1 1 74.90,54 Z"
+        android:fillColor="#000000" />
 </vector>

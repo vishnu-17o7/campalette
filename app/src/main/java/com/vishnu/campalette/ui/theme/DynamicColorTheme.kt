@@ -79,28 +79,31 @@ fun DynamicThemeProvider(
     dominantColor: Int?,
     content: @Composable () -> Unit
 ) {
-    val dynamicColors = if (dominantColor != null) {
-        createDynamicColors(
-            seedColor = dominantColor,
-            basePrimary = MaterialTheme.colorScheme.primary,
-            basePrimaryContainer = MaterialTheme.colorScheme.primaryContainer,
-            basePrimaryFixed = AtelierTheme.colors.primaryFixed,
-            basePrimaryFixedDim = AtelierTheme.colors.primaryFixedDim,
-            baseSurfaceTint = MaterialTheme.colorScheme.surfaceTint,
-            baseSurfaceContainerLow = AtelierTheme.colors.surfaceContainerLow
-        )
-    } else {
-        DynamicThemeColors(
-            primaryShift = MaterialTheme.colorScheme.primary,
-            primaryContainerShift = MaterialTheme.colorScheme.primaryContainer,
-            primaryFixedShift = AtelierTheme.colors.primaryFixed,
-            primaryFixedDimShift = AtelierTheme.colors.primaryFixedDim,
-            surfaceTintShift = MaterialTheme.colorScheme.surfaceTint,
-            surfaceContainerLowShift = AtelierTheme.colors.surfaceContainerLow
-        )
+    val currentColorScheme = MaterialTheme.colorScheme
+    val atelierColors = AtelierTheme.colors
+    val dynamicColors = remember(dominantColor, currentColorScheme, atelierColors) {
+        if (dominantColor != null) {
+            createDynamicColors(
+                seedColor = dominantColor,
+                basePrimary = currentColorScheme.primary,
+                basePrimaryContainer = currentColorScheme.primaryContainer,
+                basePrimaryFixed = atelierColors.primaryFixed,
+                basePrimaryFixedDim = atelierColors.primaryFixedDim,
+                baseSurfaceTint = currentColorScheme.surfaceTint,
+                baseSurfaceContainerLow = atelierColors.surfaceContainerLow
+            )
+        } else {
+            DynamicThemeColors(
+                primaryShift = currentColorScheme.primary,
+                primaryContainerShift = currentColorScheme.primaryContainer,
+                primaryFixedShift = atelierColors.primaryFixed,
+                primaryFixedDimShift = atelierColors.primaryFixedDim,
+                surfaceTintShift = currentColorScheme.surfaceTint,
+                surfaceContainerLowShift = atelierColors.surfaceContainerLow
+            )
+        }
     }
 
-    val currentColorScheme = MaterialTheme.colorScheme
     val dynamicColorScheme = remember(dynamicColors, currentColorScheme) {
         if (dynamicColors.blendFactor > 0f) {
             currentColorScheme.copy(
@@ -139,8 +142,8 @@ fun DynamicThemeProvider(
 }
 
 val ExpressiveSpatialSpring = androidx.compose.animation.core.spring<Float>(
-    dampingRatio = 0.55f,
-    stiffness = 300f
+    dampingRatio = 0.82f,
+    stiffness = 400f
 )
 
 val ExpressiveEffectsSpring = androidx.compose.animation.core.spring<Float>(

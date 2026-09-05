@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Campalette"
 include(":app")
+include(":benchmark")

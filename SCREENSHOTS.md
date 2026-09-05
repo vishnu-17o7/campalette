@@ -1,196 +1,35 @@
-# Campalette Screenshots
+# Screenshot checklist
 
-Since this is a camera-based app, actual screenshots require running the app on a device or emulator. Below are descriptions of what you would see:
+Capture store screenshots from the signed release candidate. Do not use the HTML design references under `design/stitch` as proof of the shipped UI.
 
-## App Interface
+## Phone set
 
-### Main Screen (Camera + Palette View)
+Use a current 1080p or higher Android phone profile and capture:
 
-```
-┌─────────────────────────────────────┐
-│  STATUS BAR (Material 3 Primary)    │
-├─────────────────────────────────────┤
-│                                     │
-│                                     │
-│        CAMERA PREVIEW               │
-│      (Live Camera Feed)             │
-│                                     │
-│          60% of screen              │
-│                                     │
-│                                     │
-│  ┌────────────────────────────┐    │
-│  │      [TAKE PHOTO]          │    │
-│  │   (FAB Button - M3 Style)  │    │
-│  └────────────────────────────┘    │
-├─────────────────────────────────────┤
-│   COLOR PALETTE                     │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │  ■ Dominant      #6750A4    │   │
-│  └─────────────────────────────┘   │
-│  ┌─────────────────────────────┐   │
-│  │  ■ Vibrant       #FF5722    │   │
-│  └─────────────────────────────┘   │
-│  ┌─────────────────────────────┐   │
-│  │  ■ Muted         #78909C    │   │
-│  └─────────────────────────────┘   │
-│        40% of screen                │
-│  (Scrollable LazyColumn)            │
-│                                     │
-└─────────────────────────────────────┘
-```
+1. Live camera with a colorful scene
+2. Captured palette review
+3. Library with several saved studies
+4. Palette editor with a selected harmony seed
+5. Color detail and related colors
+6. Share and export sheet
+7. Color Vision Preview
+8. Dark-mode settings
 
-### Permission Screen (First Launch)
+## Tablet set
 
-```
-┌─────────────────────────────────────┐
-│  STATUS BAR                          │
-├─────────────────────────────────────┤
-│                                     │
-│                                     │
-│          📷                         │
-│                                     │
-│   Camera permission is required    │
-│   to take photos                   │
-│                                     │
-│  ┌──────────────────────────┐      │
-│  │   [Grant Permission]     │      │
-│  │   (Material 3 Button)    │      │
-│  └──────────────────────────┘      │
-│                                     │
-│                                     │
-└─────────────────────────────────────┘
-```
+Use a 10-inch tablet profile and capture:
 
-### Color Card Detail
+1. Library with the detail pane open
+2. Palette editor
+3. Camera in landscape, if the final listing supports landscape screenshots
 
-Each color card in the palette displays:
+## Before capture
 
-```
-┌────────────────────────────────────┐
-│  ┌────┐                            │
-│  │    │  Vibrant                   │
-│  │ ██ │  #FF5722                   │
-│  │    │                            │
-│  └────┘                            │
-│   56dp     Name & Hex Code         │
-│  swatch                            │
-└────────────────────────────────────┘
-```
+- Install the release candidate, not a debug-only mock.
+- Use believable palette names and scenes. Remove benchmark labels.
+- Hide notifications and personal status-bar information.
+- Check that text is not clipped at the selected font scale.
+- Capture both light and dark screens only when each adds useful information.
+- Keep screenshots free of emulator chrome unless a device frame is part of the finished marketing asset.
 
-## Visual Design Elements
-
-### Material 3 Features
-
-1. **Color System**
-   - Primary: #6750A4 (Purple)
-   - Secondary: #625B71 (Muted Purple)
-   - Tertiary: #7D5260 (Rose)
-   - Surface: #FFFBFE (Light mode)
-   - Background: #FFFBFE (Light mode)
-
-2. **Typography**
-   - Headline: 22sp, Regular
-   - Body: 16sp, Regular
-   - Label: 14sp, Medium
-
-3. **Shape**
-   - Cards: 12dp rounded corners
-   - Color swatches: 8dp rounded corners
-   - FAB: Fully rounded
-
-4. **Elevation**
-   - Cards: 2dp elevation
-   - FAB: 6dp elevation (default)
-
-### Color Palette Cards
-
-When you capture an image, you'll see up to 7 color cards:
-
-1. **Dominant** - The most common color
-   - Example: Background sky color from a landscape
-
-2. **Vibrant** - Bold, saturated color
-   - Example: Bright flower petals
-
-3. **Light Vibrant** - Light, vivid color
-   - Example: Pastel colors
-
-4. **Dark Vibrant** - Dark, vivid color
-   - Example: Deep ocean blue
-
-5. **Muted** - Subdued color
-   - Example: Earthy tones
-
-6. **Light Muted** - Light, subdued color
-   - Example: Soft neutrals
-
-7. **Dark Muted** - Dark, subdued color
-   - Example: Shadow colors
-
-## Example Use Cases
-
-### Landscape Photo
-If you take a photo of a sunset:
-- **Dominant**: Orange/Yellow (sky)
-- **Vibrant**: Deep Orange (sun)
-- **Dark Vibrant**: Deep Blue (evening sky)
-- **Muted**: Brown (ground)
-
-### Food Photo
-If you take a photo of colorful vegetables:
-- **Vibrant**: Bright Red (tomato)
-- **Light Vibrant**: Yellow (pepper)
-- **Dominant**: Green (leafy greens)
-- **Dark Muted**: Brown (wooden table)
-
-### Architecture Photo
-If you take a photo of a building:
-- **Dominant**: Gray (concrete)
-- **Vibrant**: Blue (sky)
-- **Dark Muted**: Dark Gray (shadows)
-- **Light Muted**: Off-white (walls)
-
-## Interaction Flow
-
-1. **Launch** → Permission request (if needed)
-2. **Grant Permission** → Camera preview appears
-3. **Point Camera** → See live preview
-4. **Tap "TAKE PHOTO"** → Capture image
-5. **Processing** → (< 1 second)
-6. **View Palette** → Colors appear below camera
-7. **Scroll** → See all extracted colors
-8. **Take Another** → Repeat process
-
-## Theme Variations
-
-### Light Mode
-- White/light backgrounds
-- Dark text on light surfaces
-- Purple accent colors
-
-### Dark Mode
-- Dark backgrounds (#1C1B1F)
-- Light text on dark surfaces
-- Lighter purple accents
-
-### Dynamic Color (Android 12+)
-- Colors adapt to wallpaper
-- System-wide color harmony
-- Personalized palette
-
-## Accessibility
-
-- High contrast ratios (WCAG AA compliant)
-- Minimum 48dp touch targets
-- Clear visual hierarchy
-- Semantic labels for screen readers
-
-## To Generate Actual Screenshots
-
-Run the app and use:
-- **Android Studio**: Tools → Layout Inspector
-- **Device**: Screenshot via power + volume down
-- **adb**: `adb shell screencap -p /sdcard/screenshot.png`
-
-Then add them to `/screenshots` directory in the repo.
+Google Play resizes screenshots in the store. Keep core text and controls away from the edges so crops remain legible.

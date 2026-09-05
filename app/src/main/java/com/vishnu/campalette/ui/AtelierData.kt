@@ -11,7 +11,12 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.ImageProxy
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.get
+import androidx.core.graphics.scale
+import androidx.core.graphics.toColorInt
 import androidx.palette.graphics.Palette
+import com.vishnu.campalette.BuildConfig
 import com.vishnu.campalette.MainActivity
 import com.vishnu.campalette.PaletteColor
 import com.vishnu.campalette.PaletteStudy
@@ -21,6 +26,11 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ExecutorService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.atan2
@@ -46,40 +56,86 @@ object AtelierData {
             object : ImageCapture.OnImageCapturedCallback() {
                 override fun onCaptureSuccess(image: ImageProxy) {
                     try {
-                        val bitmap = imageProxyToBitmap(image)
+                        val bitmap = image.use { imageProxyToBitmap(it) }
                         mainExecutor.execute { onImageCaptured(bitmap) }
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
-                        Log.d("CameraCapture", "Photo capture failed", e)
+                        if (BuildConfig.DEBUG) {
+                            Log.d("CameraCapture", "Photo capture failed", e)
+                        }
                         mainExecutor.execute { onError(activity.getString(R.string.capture_failed)) }
-                    } finally {
-                        image.close()
                     }
                 }
 
                 override fun onError(exception: ImageCaptureException) {
-                    Log.d("CameraCapture", "Photo capture failed", exception)
+                    if (BuildConfig.DEBUG) {
+                        Log.d("CameraCapture", "Photo capture failed", exception)
+                    }
                     mainExecutor.execute { onError(activity.getString(R.string.capture_failed)) }
                 }
             }
         )
     }
 
-    fun extractColorPalette(activity: MainActivity, bitmap: Bitmap): List<PaletteColor> {
-        val palette = Palette.from(bitmap).generate()
-        val colors = mutableListOf<PaletteColor>()
-        fun addColor(nameRes: Int, rgb: Int?) {
-            rgb?.let {
-                colors.add(paletteColor(activity.getString(nameRes), it))
+    const val MIN_PALETTE_COLOR_COUNT = 2
+    const val MAX_PALETTE_COLOR_COUNT = 10
+    const val DEFAULT_PALETTE_COLOR_COUNT = 7
+    private const val PALETTE_EXTRACT_MAX_DIMENSION = 256
+
+    /**
+     * Extracts up to [colorCount] colors from [bitmap].
+     *
+     * The classic named swatches (dominant, vibrant, muted, ...) are used first, in
+     * priority order, since they read well in the UI. If the caller asks for more
+     * colors than those seven targets provide - or a photo is missing some of them -
+     * remaining slots are filled from the next most populous distinct swatches.
+     */
+    suspend fun extractColorPalette(
+        activity: MainActivity,
+        bitmap: Bitmap,
+        colorCount: Int = DEFAULT_PALETTE_COLOR_COUNT
+    ): List<PaletteColor> = withContext(Dispatchers.Default) {
+        val targetCount = colorCount.coerceIn(MIN_PALETTE_COLOR_COUNT, MAX_PALETTE_COLOR_COUNT)
+        // Palette.Builder still copies/scales its input; shrink large photos first.
+        val source = downscaleBitmap(bitmap, PALETTE_EXTRACT_MAX_DIMENSION)
+        try {
+            val palette = Palette.Builder(source)
+                .maximumColorCount(max(targetCount * 4, 16))
+                .generate()
+            val colors = mutableListOf<PaletteColor>()
+            val usedRgb = mutableSetOf<Int>()
+
+            fun addColor(nameRes: Int, rgb: Int?) {
+                if (colors.size >= targetCount) return
+                val value = rgb ?: return
+                if (!usedRgb.add(value)) return
+                colors.add(paletteColor(activity.getString(nameRes), value))
             }
+
+            addColor(R.string.dominant_color, palette.dominantSwatch?.rgb)
+            addColor(R.string.vibrant_color, palette.vibrantSwatch?.rgb)
+            addColor(R.string.muted_color, palette.mutedSwatch?.rgb)
+            addColor(R.string.light_vibrant, palette.lightVibrantSwatch?.rgb)
+            addColor(R.string.dark_vibrant, palette.darkVibrantSwatch?.rgb)
+            addColor(R.string.light_muted, palette.lightMutedSwatch?.rgb)
+            addColor(R.string.dark_muted, palette.darkMutedSwatch?.rgb)
+
+            if (colors.size < targetCount) {
+                val extraSwatches = palette.swatches
+                    .sortedByDescending { it.population }
+                    .filter { usedRgb.add(it.rgb) }
+                for (swatch in extraSwatches) {
+                    if (colors.size >= targetCount) break
+                    val label = activity.getString(R.string.additional_color, colors.size + 1)
+                    colors.add(paletteColor(label, swatch.rgb))
+                }
+            }
+
+            colors
+        } finally {
+            if (source !== bitmap) source.recycle()
         }
-        addColor(R.string.dominant_color, palette.dominantSwatch?.rgb)
-        addColor(R.string.vibrant_color, palette.vibrantSwatch?.rgb)
-        addColor(R.string.light_vibrant, palette.lightVibrantSwatch?.rgb)
-        addColor(R.string.dark_vibrant, palette.darkVibrantSwatch?.rgb)
-        addColor(R.string.muted_color, palette.mutedSwatch?.rgb)
-        addColor(R.string.light_muted, palette.lightMutedSwatch?.rgb)
-        addColor(R.string.dark_muted, palette.darkMutedSwatch?.rgb)
-        return colors
     }
 
     fun generatePaletteFromSeedColor(activity: MainActivity, seedColor: Int): List<PaletteColor> {
@@ -128,7 +184,7 @@ object AtelierData {
         val bitmapX = ((touchPoint.x + offsetX) / scale).toInt()
         val bitmapY = ((touchPoint.y + offsetY) / scale).toInt()
         if (bitmapX !in 0 until bitmap.width || bitmapY !in 0 until bitmap.height) return null
-        return bitmap.getPixel(bitmapX, bitmapY)
+        return bitmap[bitmapX, bitmapY]
     }
 
     fun nearestPaletteIndex(targetColor: Int, palette: List<PaletteColor>): Int {
@@ -283,7 +339,7 @@ object AtelierData {
         return floatArrayOf(c * 100f, m * 100f, y * 100f, k * 100f)
     }
 
-    fun Float.format0(): String = String.format("%.0f", this)
+    fun Float.format0(): String = String.format(Locale.getDefault(), "%.0f", this)
 
     fun downscaleBitmap(bitmap: Bitmap, maxDimension: Int): Bitmap {
         val width = bitmap.width
@@ -292,26 +348,72 @@ object AtelierData {
         val ratio = min(maxDimension.toFloat() / width, maxDimension.toFloat() / height)
         val newWidth = (width * ratio).toInt().coerceAtLeast(1)
         val newHeight = (height * ratio).toInt().coerceAtLeast(1)
-        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
+        return bitmap.scale(newWidth, newHeight)
     }
 
     fun encodeStudyJson(studies: List<PaletteStudy>): String {
-        val sb = StringBuilder("[")
-        studies.forEachIndexed { i, s ->
-            if (i > 0) sb.append(",")
-            sb.append("""{"n":"${s.name}","c":"${s.capturedAt}","s":"${s.source}","cl":[""")
-            s.colors.forEachIndexed { j, c ->
-                if (j > 0) sb.append(",")
-                sb.append("""{"nm":"${c.name}","h":${c.color},"hx":"${c.hexCode}","r":${c.red},"g":${c.green},"b":${c.blue}}""")
+        return JSONArray().apply {
+            studies.forEach { study ->
+                put(JSONObject().apply {
+                    put("n", study.name)
+                    put("nt", study.note)
+                    put("c", study.capturedAt)
+                    put("s", study.source)
+                    put("cl", JSONArray().apply {
+                        study.colors.forEach { color ->
+                            put(JSONObject().apply {
+                                put("nm", color.name)
+                                put("h", color.color)
+                                put("hx", color.hexCode)
+                                put("r", color.red)
+                                put("g", color.green)
+                                put("b", color.blue)
+                            })
+                        }
+                    })
+                })
             }
-            sb.append("]}")
-        }
-        sb.append("]")
-        return sb.toString()
+        }.toString()
     }
 
     fun decodeStudyJson(json: String): List<PaletteStudy> {
         if (json.isBlank() || json == "[]" || json == "null") return emptyList()
+        return try {
+            val array = JSONArray(json)
+            buildList {
+                for (studyIndex in 0 until array.length()) {
+                    val stored = array.getJSONObject(studyIndex)
+                    val storedColors = stored.optJSONArray("cl") ?: JSONArray()
+                    val colors = buildList {
+                        for (colorIndex in 0 until storedColors.length()) {
+                            val color = storedColors.getJSONObject(colorIndex)
+                            add(PaletteColor(
+                                name = color.optString("nm"),
+                                color = color.optInt("h"),
+                                hexCode = color.optString("hx"),
+                                red = color.optInt("r"),
+                                green = color.optInt("g"),
+                                blue = color.optInt("b")
+                            ))
+                        }
+                    }
+                    add(PaletteStudy(
+                        name = stored.optString("n"),
+                        colors = colors,
+                        note = stored.optString("nt"),
+                        capturedAt = stored.optString("c"),
+                        source = stored.optString("s")
+                    ))
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            decodeLegacyStudyJson(json)
+        }
+    }
+
+    private fun decodeLegacyStudyJson(json: String): List<PaletteStudy> {
         val studies = mutableListOf<PaletteStudy>()
         try {
             val blockRegex = Regex("""\{"n":"([^"]+)","c":"([^"]+)","s":"([^"]+)","cl":\[(.*?)\]\}""")
@@ -334,7 +436,10 @@ object AtelierData {
                 }
                 studies.add(PaletteStudy(name = name, colors = colors, capturedAt = capturedAt, source = source))
             }
-        } catch (_: Exception) { }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+        }
         return studies
     }
 
@@ -673,10 +778,19 @@ object AtelierData {
     }
 
     fun exportFigma(palette: List<PaletteColor>): String {
-        val entries = palette.mapIndexed { i, c ->
-            "  {\"name\": \"${c.name}\", \"color\": {\"r\": ${c.red / 255f}, \"g\": ${c.green / 255f}, \"b\": ${c.blue / 255f}, \"a\": 1}}"
-        }.joinToString(",\n")
-        return "[\n$entries\n]"
+        return JSONArray().apply {
+            palette.forEach { color ->
+                put(JSONObject().apply {
+                    put("name", color.name)
+                    put("color", JSONObject().apply {
+                        put("r", color.red / 255f)
+                        put("g", color.green / 255f)
+                        put("b", color.blue / 255f)
+                        put("a", 1f)
+                    })
+                })
+            }
+        }.toString(2)
     }
 
     enum class ColorBlindnessType { Protanopia, Deuteranopia, Tritanopia }
@@ -728,33 +842,39 @@ object AtelierData {
     }
 
     fun generateShareBitmap(palette: List<PaletteColor>, title: String, width: Int = 1080, height: Int = 1920): Bitmap {
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val bitmap = createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = android.graphics.Canvas(bitmap)
         val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-        canvas.drawColor(android.graphics.Color.parseColor("#FDF9F4"))
+        canvas.drawColor("#F2F2F7".toColorInt())
         val titlePaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.parseColor("#1C1C19")
+            color = android.graphics.Color.BLACK
             textSize = 72f
-            typeface = android.graphics.Typeface.create("serif", android.graphics.Typeface.NORMAL)
+            typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.BOLD)
         }
         val subtitlePaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.parseColor("#454D49")
+            color = "#5F5F65".toColorInt()
             textSize = 36f
             typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL)
         }
         val hexPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.parseColor("#1C1C19")
+            color = android.graphics.Color.BLACK
             textSize = 32f
             typeface = android.graphics.Typeface.create("monospace", android.graphics.Typeface.NORMAL)
         }
         val brandPaint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
-            color = android.graphics.Color.parseColor("#004743")
+            color = "#007AFF".toColorInt()
             textSize = 28f
             typeface = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.BOLD)
         }
         val margin = 80f
         var y = 200f
-        canvas.drawText(title, margin, y, titlePaint)
+        val safeTitle = android.text.TextUtils.ellipsize(
+            title,
+            android.text.TextPaint(titlePaint),
+            width - (margin * 2f),
+            android.text.TextUtils.TruncateAt.END
+        ).toString()
+        canvas.drawText(safeTitle, margin, y, titlePaint)
         y += 60f
         canvas.drawText("${palette.size} colors · Campalette", margin, y, subtitlePaint)
         y += 120f
@@ -763,7 +883,11 @@ object AtelierData {
             paint.color = pc.color
             canvas.drawRoundRect(margin, y, width - margin, y + swatchHeight - 20, 24f, 24f, paint)
             val textY = y + swatchHeight / 2f + 12f
-            val textColor = if (android.graphics.Color.luminance(pc.color) > 0.5f) android.graphics.Color.parseColor("#1C1C19") else android.graphics.Color.WHITE
+            val textColor = if (android.graphics.Color.luminance(pc.color) > 0.5f) {
+                android.graphics.Color.BLACK
+            } else {
+                android.graphics.Color.WHITE
+            }
             hexPaint.color = textColor
             canvas.drawText("${pc.name}  ${pc.hexCode}", margin + 40f, textY, hexPaint)
             y += swatchHeight
@@ -772,13 +896,18 @@ object AtelierData {
         return bitmap
     }
 
+    // Palette extraction and the review screen only ever need ~1080px on the long
+    // edge. Decoding the full-resolution JPEG and downscaling afterwards wastes
+    // most of its time on pixels that get thrown away immediately, so we decode
+    // straight to a sampled-down bitmap instead.
+    private const val DECODE_TARGET_MAX_DIMENSION = 1080
+
     private fun imageProxyToBitmap(image: ImageProxy): Bitmap {
         if (image.format == ImageFormat.JPEG || image.planes.size == 1) {
             val buffer = image.planes[0].buffer
             val bytes = ByteArray(buffer.remaining())
             buffer.get(bytes)
-            val decoded = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-                ?: throw IllegalStateException("Bitmap decode failed")
+            val decoded = decodeSampledBitmap(bytes, DECODE_TARGET_MAX_DIMENSION)
             return rotateBitmap(decoded, image.imageInfo.rotationDegrees)
         }
 
@@ -795,11 +924,39 @@ object AtelierData {
 
         val yuvImage = YuvImage(nv21, ImageFormat.NV21, image.width, image.height, null)
         val out = ByteArrayOutputStream()
-        yuvImage.compressToJpeg(Rect(0, 0, image.width, image.height), 100, out)
-        val decoded = BitmapFactory.decodeByteArray(out.toByteArray(), 0, out.size())
-            ?: throw IllegalStateException("Bitmap decode failed")
+        yuvImage.compressToJpeg(Rect(0, 0, image.width, image.height), 92, out)
+        val decoded = decodeSampledBitmap(out.toByteArray(), DECODE_TARGET_MAX_DIMENSION)
 
         return rotateBitmap(decoded, image.imageInfo.rotationDegrees)
+    }
+
+    /**
+     * Decodes [bytes] directly to a bitmap no larger than roughly [maxDimension] on
+     * its long edge, using [BitmapFactory.Options.inSampleSize] so the decoder skips
+     * pixels during decode instead of allocating a full-resolution bitmap that then
+     * gets thrown away by a separate downscale pass.
+     */
+    private fun decodeSampledBitmap(bytes: ByteArray, maxDimension: Int): Bitmap {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        val options = BitmapFactory.Options().apply {
+            inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight, maxDimension)
+        }
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+            ?: throw IllegalStateException("Bitmap decode failed")
+    }
+
+    private fun calculateInSampleSize(width: Int, height: Int, maxDimension: Int): Int {
+        if (width <= 0 || height <= 0) return 1
+        var sampleSize = 1
+        var sampledWidth = width
+        var sampledHeight = height
+        while (sampledWidth / 2 >= maxDimension && sampledHeight / 2 >= maxDimension) {
+            sampledWidth /= 2
+            sampledHeight /= 2
+            sampleSize *= 2
+        }
+        return sampleSize
     }
 
     private fun rotateBitmap(bitmap: Bitmap, rotationDegrees: Int): Bitmap {
